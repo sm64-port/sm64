@@ -6039,10 +6039,10 @@ FileModule *_AFpcminitdecompress(Track *, File *, bool seekok,
 
 bool _af_pcm_format_ok (AudioFormat *f)
 {
-	assert(!isnan(f->pcm.slope));
-	assert(!isnan(f->pcm.intercept));
-	assert(!isnan(f->pcm.minClip));
-	assert(!isnan(f->pcm.maxClip));
+	assert(!std::isnan(f->pcm.slope));
+	assert(!std::isnan(f->pcm.intercept));
+	assert(!std::isnan(f->pcm.minClip));
+	assert(!std::isnan(f->pcm.maxClip));
 
 	return true;
 }
