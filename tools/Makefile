@@ -1,12 +1,17 @@
+ifeq ($(UNAME),Darwin)
+  TARGET_OSX := -DTARGET_OSX
+endif
+
 CC := gcc
 CXX := g++
-CFLAGS := -I . -Wall -Wextra -Wno-unused-parameter -pedantic -std=c99 -O2 -s
+CFLAGS := -I . -Wall -Wextra -Wno-unused-parameter $(TARGET_OSX) -pedantic -std=c99 -O2 -s
 LDFLAGS := -lm
 PROGRAMS := n64graphics n64graphics_ci mio0 n64cksum textconv patch_libultra_math aifc_decode aiff_extract_codebook vadpcm_enc tabledesign extract_data_for_mio skyconv
 
 # if armips is not found on the system, build it in tools
 ifeq (, $(shell which armips 2> /dev/null))
 CXX_PROGRAMS += armips
+CXXFLAGS += -std=c++11 -Wall -Wno-uninitialized -Wno-unused-parameter -fno-exceptions -fno-rtti
 endif
 
 ifeq ($(OS),Windows_NT)

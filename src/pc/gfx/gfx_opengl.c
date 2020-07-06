@@ -14,15 +14,18 @@
 #define FOR_WINDOWS 0
 #endif
 
-#if FOR_WINDOWS
+#if FOR_WINDOWS || defined(TARGET_OSX)
+#define GLEW_STATIC
 #include <GL/glew.h>
-#include "SDL.h"
-#define GL_GLEXT_PROTOTYPES 1
-#include "SDL_opengl.h"
-#else
+#endif
+
 #include <SDL2/SDL.h>
+
 #define GL_GLEXT_PROTOTYPES 1
+#ifdef USE_GLES
 #include <SDL2/SDL_opengles2.h>
+#else
+#include <SDL2/SDL_opengl.h>
 #endif
 
 #include "gfx_cc.h"
@@ -472,7 +475,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
 }
 
 static void gfx_opengl_init(void) {
-#if FOR_WINDOWS
+#if FOR_WINDOWS || defined(TARGET_OSX)
     glewInit();
 #endif
     

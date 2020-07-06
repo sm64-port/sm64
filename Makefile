@@ -30,14 +30,20 @@ ifeq ($(TARGET_N64),0)
   NON_MATCHING := 1
   GRUCODE := f3dex2e
   TARGET_WINDOWS := 0
+  TARGET_OSX := 0
+  UNAME := $(shell uname)
   ifeq ($(TARGET_WEB),0)
     ifeq ($(OS),Windows_NT)
       TARGET_WINDOWS := 1
     else
       # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
-      TARGET_LINUX := 1
+      ifeq ($(UNAME),Darwin)
+        TARGET_OSX := 1
+      else
+        TARGET_LINUX := 1
     endif
   endif
+endif
 
   ifeq ($(TARGET_WINDOWS),1)
     # On Windows, default to DirectX 11
@@ -286,6 +292,10 @@ ifeq ($(TARGET_WINDOWS),0)
   CXX_FILES :=
 endif
 
+ifeq ($(TARGET_OSX),1)
+  CXX_FILES :=
+endif
+
 ifneq ($(TARGET_N64),1)
   ULTRA_C_FILES := \
     alBnkfNew.c \
@@ -423,7 +433,12 @@ export LANG := C
 
 else # TARGET_N64
 
+ifneq ($(TARGET_OSX),1)
 AS := as
+else
+AS := i686-w64-mingw32-as
+endif
+
 ifneq ($(TARGET_WEB),1)
   CC := gcc
   CXX := g++
@@ -435,9 +450,21 @@ ifeq ($(TARGET_WINDOWS),1)
 else
   LD := $(CC)
 endif
+
+ifneq ($(TARGET_OSX),1)
 CPP := cpp -P
+else
+CPP := cpp-9 -P
+endif
+
+ifneq ($(TARGET_OSX),1)
 OBJDUMP := objdump
 OBJCOPY := objcopy
+else
+OBJDUMP := i686-w64-mingw32-objdump
+OBJCOPY := i686-w64-mingw32-objcopy
+endif
+
 PYTHON := python3
 
 # Platform-specific compiler and linker flags
@@ -448,6 +475,10 @@ endif
 ifeq ($(TARGET_LINUX),1)
   PLATFORM_CFLAGS  := -DTARGET_LINUX `pkg-config --cflags libusb-1.0`
   PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0` -lasound -lpulse -no-pie
+endif
+ifeq ($(TARGET_OSX),1)
+  PLATFORM_CFLAGS := -DTARGET_OSX `pkg-config --cflags libusb-1.0`
+  PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0`
 endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
@@ -467,6 +498,10 @@ ifeq ($(ENABLE_OPENGL),1)
   ifeq ($(TARGET_LINUX),1)
     GFX_CFLAGS  += $(shell sdl2-config --cflags)
     GFX_LDFLAGS += -lGL $(shell sdl2-config --libs) -lX11 -lXrandr
+  endif
+  ifeq ($(TARGET_OSX),1)
+    GFX_CFLAGS += $(shell sdl2-config --cflags)
+    GFX_LDFLAGS += $(shell sdl2-config --libs) -framework OpenGL `pkg-config --libs glew`
   endif
   ifeq ($(TARGET_WEB),1)
     GFX_CFLAGS  += -s USE_SDL=2
