@@ -73,8 +73,8 @@ void send_display_list(struct SPTask *spTask) {
 #define SAMPLES_HIGH 656
 #define SAMPLES_LOW 640
 #else
-#define SAMPLES_HIGH 544
-#define SAMPLES_LOW 528
+#define SAMPLES_HIGH 528
+#define SAMPLES_LOW 512
 #endif
 
 void produce_one_frame(void) {
