@@ -2,7 +2,7 @@
 #include "hardware.h"
 #include "new_func.h"
 
-s32 osEPiRawStartDma(OSPiHandle *arg0, s32 dir, u32 cart_addr, void *dram_addr, u32 size) {
+s32 osEPiRawStartDma(OSPiHandle *arg0, s32 dir, u32 cart_addr, void *dram_addr, size_t size) {
     register int status;
     status = HW_REG(PI_STATUS_REG, u32);
     while (status & PI_STATUS_ERROR)

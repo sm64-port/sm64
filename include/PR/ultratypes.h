@@ -8,15 +8,14 @@
 #define TRUE 1
 #define FALSE 0
 
+#ifndef __SWITCH__
 typedef signed char            s8;
 typedef unsigned char          u8;
 typedef signed short int       s16;
 typedef unsigned short int     u16;
 typedef signed int             s32;
 typedef unsigned int           u32;
-
-typedef float  f32;
-typedef double f64;
+#endif
 
 #ifdef TARGET_N64
 typedef signed long long int   s64;
@@ -29,10 +28,16 @@ typedef s32 ptrdiff_t;
 #else
 #include <stddef.h>
 #include <stdint.h>
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
 typedef ptrdiff_t ssize_t;
 typedef int64_t s64;
 typedef uint64_t u64;
 #endif
+
+typedef float  f32;
+typedef double f64;
 
 typedef volatile u8   vu8;
 typedef volatile u16 vu16;

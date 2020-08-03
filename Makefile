@@ -31,11 +31,13 @@ ifeq ($(TARGET_N64),0)
   GRUCODE := f3dex2e
   TARGET_WINDOWS := 0
   ifeq ($(TARGET_WEB),0)
+    ifeq ($(TARGET_NX),0)
     ifeq ($(OS),Windows_NT)
       TARGET_WINDOWS := 1
     else
       # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
       TARGET_LINUX := 1
+      endif
     endif
   endif
 
@@ -75,6 +77,16 @@ ifeq ($(TARGET_N64),0)
     endif
   endif
 
+endif
+
+ifeq ($(TARGET_NX),1)
+  ifeq ($(strip $(DEVKITPRO)),)
+  $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+  endif
+endif
+
+ifeq ($(TARGET_NX),1)
+  include $(DEVKITPRO)/libnx/switch_rules
 endif
 
 ifeq ($(COMPILER),gcc)
@@ -194,7 +206,11 @@ else
 ifeq ($(TARGET_WEB),1)
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_web
 else
+ifeq ($(TARGET_NX),1)
+  BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_nx
+else
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
+endif
 endif
 endif
 
@@ -208,8 +224,13 @@ else
 EXE := $(BUILD_DIR)/$(TARGET)
 endif
 endif
+
+ifeq ($(TARGET_N64),1)
 ROM := $(BUILD_DIR)/$(TARGET).z64
+endif
+
 ELF := $(BUILD_DIR)/$(TARGET).elf
+
 LD_SCRIPT := sm64.ld
 MIO0_DIR := $(BUILD_DIR)/bin
 SOUND_BIN_DIR := $(BUILD_DIR)/sound
@@ -337,6 +358,8 @@ GODDARD_O_FILES := $(foreach file,$(GODDARD_C_FILES),$(BUILD_DIR)/$(file:.c=.o))
 # Automatic dependency files
 DEP_FILES := $(O_FILES:.o=.d) $(ULTRA_O_FILES:.o=.d) $(GODDARD_O_FILES:.o=.d) $(BUILD_DIR)/$(LD_SCRIPT).d
 
+OFILES :=  $(O_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(SOUND_OBJ_FILES)
+
 # Files with GLOBAL_ASM blocks
 ifeq ($(NON_MATCHING),0)
 GLOBAL_ASM_C_FILES != grep -rl 'GLOBAL_ASM(' $(wildcard src/**/*.c)
@@ -440,6 +463,16 @@ OBJDUMP := objdump
 OBJCOPY := objcopy
 PYTHON := python3
 
+ifeq ($(TARGET_NX),1)
+  CPP := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-cpp -P
+  OBJDUMP := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-objdump
+  OBJCOPY := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-objcopy
+  AS := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-as
+  CC := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-gcc
+  CXX := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-g++
+  LD := $(CXX)
+endif
+
 # Platform-specific compiler and linker flags
 ifeq ($(TARGET_WINDOWS),1)
   PLATFORM_CFLAGS  := -DTARGET_WINDOWS
@@ -452,6 +485,23 @@ endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
   PLATFORM_LDFLAGS := -lm -no-pie -s TOTAL_MEMORY=20MB -g4 --source-map-base http://localhost:8080/ -s "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain']"
+endif
+ifeq ($(TARGET_NX),1)
+  APP_TITLE := Super Mario 64
+  APP_AUTHOR := Nintendo, n64decomp team, sm64pc team
+  APP_VERSION := 1_master_$(VERSION)
+  APP_ICON := nx_icon.jpg
+
+  PORTLIBS ?= $(DEVKITPRO)/portlibs/switch
+  LIBNX ?= $(DEVKITPRO)/libnx
+  LIBDIRS := $(PORTLIBS) $(LIBNX)
+
+  export LIBPATHS  :=  $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+  
+  PLATFORM_CFLAGS  := -g -O0 -std=gnu99 -D__SWITCH__ -ffunction-sections -fsigned-char -Wextra -Wno-format-security -Wall -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec $(foreach dir,$(LIBDIRS),-I$(dir)/include)
+  PLATFORM_LDFLAGS := -specs=$(LIBNX)/switch.specs -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=local-exec $(LIBPATHS) -lglad -lEGL -lGLESv2 -lSDL2 -lglapi -ldrm_nouveau -lnx -lm -lstdc++ -Wl,-Map,$(notdir $*.map)
+  
+  LIBS    	:= -lEGL -lGLESv2 -lSDL2 -lglapi -ldrm_nouveau -lnx -lm -lstdc++
 endif
 
 PLATFORM_CFLAGS += -DNO_SEGMENTED_MEMORY
@@ -534,6 +584,10 @@ else
 all: $(EXE)
 endif
 
+ifeq ($(TARGET_NX),1)
+all: $(EXE).nro
+endif
+
 clean:
 	$(RM) -r $(BUILD_DIR_BASE)
 
@@ -548,6 +602,13 @@ load: $(ROM)
 	$(LOADER) $(LOADER_FLAGS) $<
 
 libultra: $(BUILD_DIR)/libultra.a
+
+ifeq ($(TARGET_NX),1)
+$(BUILD_DIR)/$(TARGET).nro: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).nacp
+
+$(BUILD_DIR)/$(TARGET).elf: $(OFILES)
+
+endif
 
 $(BUILD_DIR)/asm/boot.o: $(IPL3_RAW_FILES)
 $(BUILD_DIR)/src/game/crash_screen.o: $(CRASH_TEXTURE_C_FILES)

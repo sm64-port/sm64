@@ -8,6 +8,10 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 #include "controller_xinput.h"
+#elif defined(TARGET_N3DS)
+#include "controller_3ds.h"
+#elif defined(__SWITCH__)
+#include "controller_switch.h"
 #else
 #include "controller_sdl.h"
 #endif
@@ -17,6 +21,11 @@
 #endif
 
 static struct ControllerAPI *controller_implementations[] = {
+#ifdef TARGET_N3DS
+    &controller_3ds
+#elif defined(__SWITCH__)
+    &controller_switch,
+#else
     &controller_recorded_tas,
 #if defined(_WIN32) || defined(_WIN64)
     &controller_xinput,
@@ -27,6 +36,7 @@ static struct ControllerAPI *controller_implementations[] = {
     &controller_wup,
 #endif
     &controller_keyboard,
+#endif
 };
 
 s32 osContInit(UNUSED OSMesgQueue *mq, u8 *controllerBits, UNUSED OSContStatus *status) {

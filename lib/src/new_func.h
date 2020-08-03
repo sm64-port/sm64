@@ -14,7 +14,7 @@ extern u32 EU_D_80302090;
 extern OSPiHandle *__osDiskHandle; //possibly __osPiTable
 
 extern volatile u32 D_8030208C;
-s32 osEPiRawStartDma(OSPiHandle *arg0, s32 dir, u32 cart_addr, void *dram_addr, u32 size);
+s32 osEPiRawStartDma(OSPiHandle *arg0, s32 dir, u32 cart_addr, void *dram_addr, size_t size);
 void func_802F4B08(void);
 void func_802F4A20(void);
 void func_802F7140(u32);

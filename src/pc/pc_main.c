@@ -1,4 +1,9 @@
 #include <stdlib.h>
+#include <unistd.h>
+
+#ifdef __SWITCH__
+#include <switch.h>
+#endif
 
 #ifdef TARGET_WEB
 #include <emscripten.h>
@@ -16,7 +21,10 @@
 #include "gfx/gfx_direct3d12.h"
 #include "gfx/gfx_dxgi.h"
 #include "gfx/gfx_glx.h"
+#include "gfx/gfx_3ds.h"
+#include "gfx/gfx_citro3d.h"
 #include "gfx/gfx_sdl.h"
+#include "gfx/gfx_egl.h"
 
 #include "audio/audio_api.h"
 #include "audio/audio_wasapi.h"
@@ -24,6 +32,7 @@
 #include "audio/audio_alsa.h"
 #include "audio/audio_sdl.h"
 #include "audio/audio_null.h"
+#include "audio/audio_3ds.h"
 
 #include "controller/controller_keyboard.h"
 
@@ -144,8 +153,10 @@ void main_func(void) {
     main_pool_init(pool, pool + sizeof(pool) / sizeof(pool[0]));
     gEffectsMemoryPool = mem_pool_init(0x4000, MEMORY_POOL_LEFT);
 
+#ifndef TARGET_N3DS
     configfile_load(CONFIG_FILE);
     atexit(save_config);
+#endif
 
 #ifdef TARGET_WEB
     emscripten_set_main_loop(em_main_loop, 0, 0);
@@ -162,9 +173,14 @@ void main_func(void) {
     rendering_api = &gfx_opengl_api;
     #if defined(__linux__) || defined(__BSD__)
         wm_api = &gfx_glx;
+    #elif defined(__SWITCH__)
+        wm_api = &gfx_egl_api;
     #else
         wm_api = &gfx_sdl;
     #endif
+#elif defined(TARGET_N3DS)
+    wm_api = &gfx_3ds;
+    rendering_api = &gfx_citro3d_api;
 #endif
 
     gfx_init(wm_api, rendering_api, "Super Mario 64 PC-Port", configFullscreen);
@@ -187,9 +203,14 @@ void main_func(void) {
         audio_api = &audio_alsa;
     }
 #endif
-#ifdef TARGET_WEB
+#if defined(TARGET_WEB) && defined(__SWITCH__)
     if (audio_api == NULL && audio_sdl.init()) {
         audio_api = &audio_sdl;
+    }
+#endif
+#ifdef TARGET_N3DS
+    if (audio_api == NULL && audio_3ds.init()) {
+        audio_api = &audio_3ds;
     }
 #endif
     if (audio_api == NULL) {
@@ -205,6 +226,15 @@ void main_func(void) {
         game_loop_one_iteration();
     }*/
     inited = 1;
+#elif defined(TARGET_N3DS)
+    inited = 1;
+    //the 3ds version has its own main loop
+    wm_api->main_loop(produce_one_frame);
+#elif defined(__SWITCH__)
+    inited = 1;
+    while (appletMainLoop()) {
+        wm_api->main_loop(produce_one_frame);
+    }
 #else
     inited = 1;
     while (1) {
@@ -218,6 +248,12 @@ void main_func(void) {
 int WINAPI WinMain(UNUSED HINSTANCE hInstance, UNUSED HINSTANCE hPrevInstance, UNUSED LPSTR pCmdLine, UNUSED int nCmdShow) {
     main_func();
     return 0;
+}
+#elif defined(__SWITCH__)
+int main(int argc, char *argv[]) {
+    main_func();
+
+    return EXIT_SUCCESS;
 }
 #else
 int main(UNUSED int argc, UNUSED char *argv[]) {
