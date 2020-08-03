@@ -21,21 +21,24 @@ NON_MATCHING ?= 0
 TARGET_N64 ?= 0
 # Build for Emscripten/WebGL
 TARGET_WEB ?= 0
+# Build for Nintendo 3DS
+TARGET_N3DS ?= 0
 # Compiler to use (ido or gcc)
 COMPILER ?= ido
 
 # Automatic settings only for ports
 ifeq ($(TARGET_N64),0)
-
   NON_MATCHING := 1
   GRUCODE := f3dex2e
   TARGET_WINDOWS := 0
   ifeq ($(TARGET_WEB),0)
-    ifeq ($(OS),Windows_NT)
-      TARGET_WINDOWS := 1
-    else
-      # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
-      TARGET_LINUX := 1
+    ifeq ($(TARGET_N3DS),0)
+      ifeq ($(OS),Windows_NT)
+        TARGET_WINDOWS := 1
+      else
+        # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
+        TARGET_LINUX := 1
+      endif
     endif
   endif
 
@@ -47,8 +50,10 @@ ifeq ($(TARGET_N64),0)
       endif
     endif
   else
-    # On others, default to OpenGL
-    ENABLE_OPENGL ?= 1
+    ifeq ($(TARGET_N3DS),0)
+      # On others, default to OpenGL
+      ENABLE_OPENGL ?= 1
+    endif
   endif
 
   # Sanity checks
@@ -100,7 +105,7 @@ ifeq ($(VERSION),sh)
   VERSION_DEF := VERSION_SH
   GRUCODE_DEF := F3D_NEW
 # TODO: GET RID OF THIS!!! We should mandate assets for Shindou like EU but we dont have the addresses extracted yet so we'll just pretend you have everything extracted for now.
-  NOEXTRACT := 1 
+  NOEXTRACT := 1
 else
   $(error unknown version "$(VERSION)")
 endif
@@ -191,22 +196,30 @@ BUILD_DIR_BASE := build
 ifeq ($(TARGET_N64),1)
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)
 else
-ifeq ($(TARGET_WEB),1)
-  BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_web
-else
-  BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
-endif
+  ifeq ($(TARGET_WEB),1)
+    BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_web
+  else
+    ifeq ($(TARGET_N3DS),1)
+      BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_3ds
+    else
+      BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
+    endif
+  endif
 endif
 
 LIBULTRA := $(BUILD_DIR)/libultra.a
 ifeq ($(TARGET_WEB),1)
 EXE := $(BUILD_DIR)/$(TARGET).html
 else
-ifeq ($(TARGET_WINDOWS),1)
-EXE := $(BUILD_DIR)/$(TARGET).exe
-else
-EXE := $(BUILD_DIR)/$(TARGET)
-endif
+  ifeq ($(TARGET_WINDOWS),1)
+  EXE := $(BUILD_DIR)/$(TARGET).exe
+  else
+    ifeq ($(TARGET_N3DS),1)
+    EXE := $(BUILD_DIR)/$(TARGET).3dsx
+    else
+    EXE := $(BUILD_DIR)/$(TARGET)
+    endif
+  endif
 endif
 ROM := $(BUILD_DIR)/$(TARGET).z64
 ELF := $(BUILD_DIR)/$(TARGET).elf
@@ -438,6 +451,17 @@ endif
 CPP := cpp -P
 OBJDUMP := objdump
 OBJCOPY := objcopy
+
+ifeq ($(TARGET_N3DS),1)
+  CPP := $(DEVKITARM)/bin/arm-none-eabi-cpp -P
+  OBJDUMP := $(DEVKITARM)/bin/arm-none-eabi-objdump
+  OBJCOPY := $(DEVKITARM)/bin/arm-none-eabi-objcopy
+  AS := $(DEVKITARM)/bin/arm-none-eabi-as
+  CC := $(DEVKITARM)/bin/arm-none-eabi-gcc
+  CXX := $(DEVKITARM)/bin/arm-none-eabi-g++
+  LD := $(CXX)
+endif
+
 PYTHON := python3
 
 # Platform-specific compiler and linker flags
@@ -452,6 +476,13 @@ endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
   PLATFORM_LDFLAGS := -lm -no-pie -s TOTAL_MEMORY=20MB -g4 --source-map-base http://localhost:8080/ -s "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain']"
+endif
+ifeq ($(TARGET_N3DS),1)
+  CTRULIB  :=  $(DEVKITPRO)/libctru
+  LIBDIRS  := $(CTRULIB)
+  export LIBPATHS  :=  $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+  PLATFORM_CFLAGS  := -mtp=soft -DTARGET_N3DS -DARM11 -DosGetTime=n64_osGetTime -D_3DS -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -fomit-frame-pointer -ffast-math $(foreach dir,$(LIBDIRS),-I$(dir)/include)
+  PLATFORM_LDFLAGS := $(LIBPATHS) -lcitro3d -lctru -lm -specs=3dsx.specs -g -marm -mthumb-interwork -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft # -Wl,-Map,$(notdir $*.map)
 endif
 
 PLATFORM_CFLAGS += -DNO_SEGMENTED_MEMORY
@@ -484,8 +515,14 @@ endif
 
 GFX_CFLAGS += -DWIDESCREEN
 
+ifeq ($(TARGET_N3DS),1)
+  MARCH_FLAGS :=
+else
+  MARCH_FLAGS := -march=native
+endif
+
 CC_CHECK := $(CC) -fsyntax-only -fsigned-char $(INCLUDE_CFLAGS) -Wall -Wextra -Wno-format-security -D_LANGUAGE_C $(VERSION_CFLAGS) $(MATCH_CFLAGS) $(PLATFORM_CFLAGS) $(GFX_CFLAGS) $(GRUCODE_CFLAGS)
-CFLAGS := $(OPT_FLAGS) $(INCLUDE_CFLAGS) -D_LANGUAGE_C $(VERSION_CFLAGS) $(MATCH_CFLAGS) $(PLATFORM_CFLAGS) $(GFX_CFLAGS) $(GRUCODE_CFLAGS) -fno-strict-aliasing -fwrapv -march=native
+CFLAGS := $(OPT_FLAGS) $(INCLUDE_CFLAGS) -D_LANGUAGE_C $(VERSION_CFLAGS) $(MATCH_CFLAGS) $(PLATFORM_CFLAGS) $(GFX_CFLAGS) $(GRUCODE_CFLAGS) $(MARCH_FLAGS) -fno-strict-aliasing -fwrapv
 
 ASFLAGS := -I include -I $(BUILD_DIR) $(VERSION_ASFLAGS)
 
@@ -816,10 +853,21 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 	$(OBJDUMP) -D $< > $@
 
 else
+ifeq ($(TARGET_N3DS),1)
+# for building the vertex shader
+$(BUILD_DIR)/src/pc/gfx/shader.shbin.o : src/pc/gfx/shader.v.pica
+	$(eval CURBIN := $<.shbin)
+	$(DEVKITPRO)/tools/bin/picasso -o $(BUILD_DIR)/src/pc/gfx/shader.shbin $<
+	$(DEVKITPRO)/tools/bin/bin2s $(BUILD_DIR)/src/pc/gfx/shader.shbin | $(AS) -o $@
+
+$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o
+	$(LD) -L $(BUILD_DIR) -o $@.elf $(O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
+	3dsxtool $@.elf $@
+else
 $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
 	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 endif
-
+endif
 
 
 .PHONY: all clean distclean default diff test load libultra

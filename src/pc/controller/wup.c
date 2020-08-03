@@ -1,4 +1,4 @@
-#if !defined(__MINGW32__) && !defined(__BSD__) && !defined(TARGET_WEB)
+#if !defined(__MINGW32__) && !defined(__BSD__) && !defined(TARGET_WEB) && !defined(TARGET_N3DS)
 // See LICENSE for license
 
 #define _XOPEN_SOURCE 600
@@ -194,7 +194,7 @@ static void *adapter_thread(void *data)
       }
       if (size != 37 || payload[0] != 0x21)
          continue;
-      
+
       unsigned char *controller = &payload[1];
 
       unsigned char rumble[5] = { 0x11, 0, 0, 0, 0 };

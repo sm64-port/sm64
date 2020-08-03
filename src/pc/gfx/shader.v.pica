@@ -1,0 +1,25 @@
+; Uniforms
+
+; Constants
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+.out outtc1 texcoord1
+.out outclr color
+
+; Inputs (defined as aliases for convenience)
+.alias inpos v0
+.alias intex v1
+.alias inclr v2
+
+.proc main
+  mov outpos, inpos
+
+  mov outtc0, intex
+  mov outtc1, intex
+
+  mov outclr, inclr
+
+  end
+.end
