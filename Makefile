@@ -424,9 +424,10 @@ export LANG := C
 else # TARGET_N64
 
 AS := as
+#Use Alternitive C compilers
 ifneq ($(TARGET_WEB),1)
-  CC := gcc
-  CXX := g++
+  CC ?= gcc
+  CXX ?= g++
 else
   CC := emcc
 endif
