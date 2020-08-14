@@ -255,14 +255,14 @@ endif
 
   # Use a default opt flag for gcc
   ifeq ($(COMPILER),gcc)
-    OPT_FLAGS := -O2
+    OPT_FLAGS := -Ofast -flto=auto -fno-fat-lto-objects -fuse-linker-plugin -pipe
   endif
 
 else
 ifeq ($(TARGET_WEB),1)
   OPT_FLAGS := -O2 -g4 --source-map-base http://localhost:8080/
 else
-  OPT_FLAGS := -O2
+  OPT_FLAGS := -Ofast -flto=auto -fno-fat-lto-objects -fuse-linker-plugin -pipe
 endif
 endif
 
@@ -408,6 +408,7 @@ ENDIAN_BITWIDTH := $(BUILD_DIR)/endian-and-bitwidth
 
 ifeq ($(COMPILER),gcc)
   CFLAGS := -march=vr4300 -mfix4300 -mabi=32 -mno-shared -G 0 -mhard-float -fno-stack-protector -fno-common -fno-zero-initialized-in-bss -I include -I src/ -I $(BUILD_DIR)/include -fno-PIC -mno-abicalls -fno-strict-aliasing -fno-inline-functions -ffreestanding -fwrapv -Wall -Wextra $(COMMON_CFLAGS)
+  LDFLAGS += $(CFLAGS)
 endif
 
 ifeq ($(shell getconf LONG_BIT), 32)
@@ -489,7 +490,7 @@ CFLAGS := $(OPT_FLAGS) $(INCLUDE_CFLAGS) -D_LANGUAGE_C $(VERSION_CFLAGS) $(MATCH
 
 ASFLAGS := -I include -I $(BUILD_DIR) $(VERSION_ASFLAGS)
 
-LDFLAGS := $(PLATFORM_LDFLAGS) $(GFX_LDFLAGS)
+LDFLAGS := $(PLATFORM_LDFLAGS) $(GFX_LDFLAGS) $(CFLAGS)
 
 endif
 
