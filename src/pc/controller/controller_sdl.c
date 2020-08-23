@@ -88,8 +88,8 @@ static void controller_sdl_read(OSContPad *pad) {
 
     uint32_t magnitude_sq = (uint32_t)(leftx * leftx) + (uint32_t)(lefty * lefty);
     if (magnitude_sq > (uint32_t)(DEADZONE * DEADZONE)) {
-        pad->stick_x = round((float) leftx) / 32768 * 80;
-        pad->stick_y = round((float) -lefty) / 32768 * 80;
+        pad->stick_x = round(((float) leftx) / 32768 * 80);
+        pad->stick_y = round(((float) -lefty) / 32768 * 80);
     }
 }
 
