@@ -1,0 +1,40 @@
+#ifndef GFX_MINIMAP_LEVELS_H
+#define GFX_MINIMAP_LEVELS_H
+
+#include "minimap_types.h"
+
+#include "3ds/bbh_t3x.h"
+#include "3ds/bitdw_t3x.h"
+#include "3ds/bitfs_t3x.h"
+#include "3ds/bits_t3x.h"
+#include "3ds/bob_t3x.h"
+#include "3ds/bowser_1_t3x.h"
+#include "3ds/bowser_2_t3x.h"
+#include "3ds/bowser_3_t3x.h"
+#include "3ds/castle_t3x.h"
+#include "3ds/castle_courtyard_t3x.h"
+#include "3ds/castle_grounds_t3x.h"
+#include "3ds/castle_grounds_drained_t3x.h"
+#include "3ds/ccm_t3x.h"
+#include "3ds/cotmc_t3x.h"
+#include "3ds/ddd_t3x.h"
+#include "3ds/hmc_t3x.h"
+#include "3ds/jrb_t3x.h"
+#include "3ds/lll_t3x.h"
+#include "3ds/pss_t3x.h"
+#include "3ds/rr_t3x.h"
+#include "3ds/sa_t3x.h"
+#include "3ds/sl_t3x.h"
+#include "3ds/ssl_t3x.h"
+#include "3ds/thi_t3x.h"
+#include "3ds/totwc_t3x.h"
+#include "3ds/ttc_t3x.h"
+#include "3ds/ttm_t3x.h"
+#include "3ds/unknown_t3x.h"
+#include "3ds/vcutm_t3x.h"
+#include "3ds/wdw_t3x.h"
+#include "3ds/wmotr_t3x.h"
+#include "3ds/wf_t3x.h"
+
+extern const struct MiniMapInfo level_info[];
+#endif

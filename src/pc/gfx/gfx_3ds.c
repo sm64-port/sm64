@@ -7,12 +7,13 @@
 
 C3D_RenderTarget *gTarget;
 C3D_RenderTarget *gTargetRight;
+C3D_RenderTarget *gTargetBottom;
+
 float gSliderLevel;
 
 struct gfx_configuration gfx_config = {true, false}; // aa on, 800px off
 
 Gfx3DSMode gGfx3DSMode;
-PrintConsole gConsole;
 
 static bool menu_mode;
 static u8 n3ds_model = 0;
@@ -100,8 +101,20 @@ static void init_top_screens()
     C3D_DepthMap(true, -1.0f, 0);
     C3D_DepthTest(false, GPU_LEQUAL, GPU_WRITE_ALL);
     C3D_AlphaTest(true, GPU_GREATER, 0x00);
-}
 
+    // init bottom screen
+
+    transferFlags =
+        GX_TRANSFER_FLIP_VERT(0) |
+        GX_TRANSFER_OUT_TILED(0) |
+        GX_TRANSFER_RAW_COPY(0) |
+        GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) |
+        GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) |
+        GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO);
+
+    gTargetBottom = C3D_RenderTargetCreate(240, 320, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    C3D_RenderTargetSetOutput(gTargetBottom, GFX_BOTTOM, GFX_LEFT, transferFlags);
+}
 
 static void gfx_3ds_init(UNUSED const char *game_name, UNUSED bool start_in_fullscreen)
 {
@@ -109,7 +122,6 @@ static void gfx_3ds_init(UNUSED const char *game_name, UNUSED bool start_in_full
         osSetSpeedupEnable(true);
 
     gfxInitDefault();
-    consoleSelect(consoleInit(GFX_BOTTOM, &gConsole));
 
     Result rc = cfguInit();
     if (R_SUCCEEDED(rc))

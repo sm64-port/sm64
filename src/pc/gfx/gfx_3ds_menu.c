@@ -3,11 +3,13 @@
 #include "3ds.h"
 #include "gfx_3ds_menu.h"
 
-
+static PrintConsole sConsole;
 int selected = 0;
 
 int display_menu(struct gfx_configuration *config)
 {
+    consoleSelect(consoleInit(GFX_BOTTOM, &sConsole));
+
     int res = 0;
 
     consoleClear();
@@ -50,10 +52,10 @@ int display_menu(struct gfx_configuration *config)
 
     // Flush and swap framebuffers
     gfxFlushBuffers();
-    gfxSwapBuffers();
+    //gfxSwapBuffers();
 
     //Wait for VBlank
-    gspWaitForVBlank();
+    //gspWaitForVBlank();
 
     return res;
 }

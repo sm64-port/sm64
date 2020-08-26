@@ -5,6 +5,7 @@ RUN apt-get update && \
       binutils-mips-linux-gnu \
       bsdmainutils \
       build-essential \
+      imagemagick \
       libaudiofile-dev \
       pkg-config \
       python3 \

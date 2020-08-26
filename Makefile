@@ -241,6 +241,7 @@ else
   SRC_DIRS := $(SRC_DIRS) src/pc src/pc/gfx src/pc/audio src/pc/controller
   ASM_DIRS :=
 endif
+
 BIN_DIRS := bin bin/$(VERSION)
 
 ULTRA_SRC_DIRS := lib/src lib/src/math
@@ -366,6 +367,36 @@ SEG_FILES := $(SEGMENT_ELF_FILES) $(ACTOR_ELF_FILES) $(LEVEL_ELF_FILES)
 INCLUDE_CFLAGS := -I include -I $(BUILD_DIR) -I $(BUILD_DIR)/include -I src -I .
 ENDIAN_BITWIDTH := $(BUILD_DIR)/endian-and-bitwidth
 
+# minimap
+ifeq ($(TARGET_N3DS),1)
+MINIMAP := src/minimap
+
+MINIMAP_C := $(wildcard $(MINIMAP)/*.c)
+MINIMAP_O := $(foreach file,$(MINIMAP_C),$(BUILD_DIR)/$(file:.c=.o))
+
+MINIMAP_TEXTURES := $(MINIMAP)/3ds
+MINIMAP_PNG := $(wildcard $(MINIMAP_TEXTURES)/*.png)
+MINIMAP_T3S := $(foreach file,$(MINIMAP_PNG),$(BUILD_DIR)/$(file:.png=.t3s))
+MINIMAP_T3X := $(foreach file,$(MINIMAP_PNG),$(BUILD_DIR)/$(file:.png=.t3x))
+MINIMAP_T3X_O := $(foreach file,$(MINIMAP_T3X),$(file:.t3x=.t3x.o))
+MINIMAP_T3X_HEADERS := $(foreach file,$(MINIMAP_PNG),$(file:.png=_t3x.h))
+
+$(info MINIMAP_C $(MINIMAP_C))
+$(info MINIMAP_O $(MINIMAP_O))
+$(info MINIMAP_PNG $(MINIMAP_PNG))
+$(info MINIMAP_T3S $(MINIMAP_T3S))
+$(info MINIMAP_T3X $(MINIMAP_T3X))
+$(info MINIMAP_T3X_O $(MINIMAP_T3X_O))
+$(info MINIMAP_T3X_HEADERS $(MINIMAP_T3X_HEADERS))
+
+# $(error fuu)
+vpath %.png $(MINIMAP_TEXTURES)
+vpath %.t3s $(BUILD_DIR)/$(MINIMAP_TEXTURES)
+vpath %.t3x $(BUILD_DIR)/$(MINIMAP_TEXTURES)
+
+INCLUDE_CFLAGS += -I src/minimap
+endif
+
 ifeq ($(TARGET_N64),1)
 IRIX_ROOT := tools/ido5.3_compiler
 
@@ -480,11 +511,11 @@ ifeq ($(TARGET_WEB),1)
   PLATFORM_LDFLAGS := -lm -no-pie -s TOTAL_MEMORY=20MB -g4 --source-map-base http://localhost:8080/ -s "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain']"
 endif
 ifeq ($(TARGET_N3DS),1)
-  CTRULIB  :=  $(DEVKITPRO)/libctru
-  LIBDIRS  := $(CTRULIB)
+  CTRULIB := $(DEVKITPRO)/libctru
+  LIBDIRS := $(CTRULIB)
   export LIBPATHS  :=  $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
   PLATFORM_CFLAGS  := -mtp=soft -DTARGET_N3DS -DARM11 -DosGetTime=n64_osGetTime -D_3DS -march=armv6k -mtune=mpcore -mfloat-abi=hard -mword-relocations -fomit-frame-pointer -ffast-math $(foreach dir,$(LIBDIRS),-I$(dir)/include)
-  PLATFORM_LDFLAGS := $(LIBPATHS) -lcitro3d -lctru -lm -specs=3dsx.specs -g -marm -mthumb-interwork -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+  PLATFORM_LDFLAGS := $(LIBPATHS) -lcitro2d -lcitro3d -lctru -lm -specs=3dsx.specs -g -marm -mthumb-interwork -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 endif
 
 PLATFORM_CFLAGS += -DNO_SEGMENTED_MEMORY
@@ -640,6 +671,10 @@ $(BUILD_DIR)/text/%/define_text.inc.c: text/define_text.inc.c text/%/courses.h t
 
 RSP_DIRS := $(BUILD_DIR)/rsp
 ALL_DIRS := $(BUILD_DIR) $(addprefix $(BUILD_DIR)/,$(SRC_DIRS) $(ASM_DIRS) $(GODDARD_SRC_DIRS) $(ULTRA_SRC_DIRS) $(ULTRA_ASM_DIRS) $(ULTRA_BIN_DIRS) $(BIN_DIRS) $(TEXTURE_DIRS) $(TEXT_DIRS) $(SOUND_SAMPLE_DIRS) $(addprefix levels/,$(LEVEL_DIRS)) include) $(MIO0_DIR) $(addprefix $(MIO0_DIR)/,$(VERSION)) $(SOUND_BIN_DIR) $(SOUND_BIN_DIR)/sequences/$(VERSION) $(RSP_DIRS)
+
+ifeq ($(TARGET_N3DS),1)
+  ALL_DIRS += $(BUILD_DIR)/$(MINIMAP_TEXTURES)
+endif
 
 # Make sure build directory exists before compiling anything
 DUMMY != mkdir -p $(ALL_DIRS)
@@ -870,9 +905,32 @@ $(BUILD_DIR)/src/pc/gfx/shader.shbin.o : src/pc/gfx/shader.v.pica
 ifneq (,$(wildcard ./icon.smdh))
     3DSXTOOL_ARGS := --smdh=icon.smdh
 endif
-$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o
-	$(LD) -L $(BUILD_DIR) -o $@.elf $(O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
+$(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o  $(MINIMAP_O)
+	$(LD) -L $(BUILD_DIR) -o $@.elf $(O_FILES) $(BUILD_DIR)/src/pc/gfx/shader.shbin.o $(MINIMAP_O) $(MINIMAP_T3X_O) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 	3dsxtool $@.elf $@ $(3DSXTOOL_ARGS)
+
+# stolen from /opt/devkitpro/devkitARM/base_tools
+define bin2o
+	bin2s -a 4 -H $(MINIMAP_TEXTURES)/`(echo $(<F) | tr . _)`.h $(BUILD_DIR)/$< | $(AS) -o $(BUILD_DIR)/$(MINIMAP_TEXTURES)/$(<F).o
+endef
+
+# force minimap to be generated
+$(BUILD_DIR)/src/pc/gfx/gfx_citro3d.o: $(MINIMAP_O)
+$(MINIMAP_O): $(MINIMAP_T3X_HEADERS)
+
+.PRECIOUS: %.t3x
+%.t3x.o %_t3x.h: %.t3x
+	@echo "bin2o $(BUILD_DIR)/$< $@"
+	@$(bin2o)
+
+%.t3x: %.t3s
+	@echo "t3s > t3x | tex3ds -i $(BUILD_DIR)/$< -o $(BUILD_DIR)/$@"
+	@tex3ds -i $(BUILD_DIR)/$< -o $(BUILD_DIR)/$@
+
+%.t3s: %.png
+	@echo "png > t3s | $(<) > $(BUILD_DIR)/$@"
+	@printf -- "-f rgba -z auto\n../../../../../$(<)\n" > $(BUILD_DIR)/$@
+
 else
 $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
 	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)

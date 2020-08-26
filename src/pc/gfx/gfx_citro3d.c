@@ -5,7 +5,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
+#include "minimap.h"
+
+#include "gfx_citro3d.h"
 #include "gfx_3ds.h"
 
 #include "gfx_cc.h"
@@ -635,6 +639,7 @@ static void gfx_citro3d_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size
     bool hasColor = sShaderProgramPool[sCurShader].num_inputs > 0;
     bool hasAlpha = (sShaderProgramPool[sCurShader].shader_id & SHADER_OPT_ALPHA) != 0;
     bool hasFog = (sShaderProgramPool[sCurShader].shader_id & SHADER_OPT_FOG) != 0;
+
     for (u32 i = 0; i < 3 * buf_vbo_num_tris; i++)
     {
         *dst++ = buf_vbo[offset + 1];
@@ -739,6 +744,8 @@ static void gfx_citro3d_draw_triangles_helper(float buf_vbo[], size_t buf_vbo_le
 #endif
 }
 
+static void gfx_citro3d_init_minimap(void);
+
 static void gfx_citro3d_init(void)
 {
     sVShaderDvlb = DVLB_ParseFile((u32*)shader_shbin, shader_shbin_size);
@@ -768,31 +775,228 @@ static void gfx_citro3d_init(void)
     C3D_DepthMap(true, -1.0f, 0);
     C3D_DepthTest(false, GPU_LEQUAL, GPU_WRITE_ALL);
     C3D_AlphaTest(true, GPU_GREATER, 0x00);
+
+    // minimap_init();
+    gfx_citro3d_init_minimap();
 }
 
 static void gfx_citro3d_start_frame(void)
 {
     sBufIdx = 0;
 
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     C3D_RenderTargetClear(gTarget, C3D_CLEAR_ALL, 0x000000FF, 0xFFFFFFFF);
 #ifdef ENABLE_N3DS_3D_MODE
     if (gGfx3DSMode == GFX_3DS_MODE_NORMAL || gGfx3DSMode == GFX_3DS_MODE_AA_22)
         C3D_RenderTargetClear(gTargetRight, C3D_CLEAR_ALL, 0x000000FF, 0xFFFFFFFF);
 #endif
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 }
 
 static void gfx_citro3d_on_resize(void)
 {
 }
 
-static void gfx_citro3d_end_frame(void)
+static C3D_Tex minimap_tex;
+static bool loadTextureFromMem(C3D_Tex* tex, C3D_TexCube* cube, const void* data, size_t size)
 {
-    float target_fps = 30.0f;
+	Tex3DS_Texture t3x = Tex3DS_TextureImport(data, size, tex, cube, false);
+	if (!t3x)
+		return false;
+
+	// Delete the t3x object since we don't need it
+	Tex3DS_TextureFree(t3x);
+	return true;
+}
+
+typedef struct { float xyzw[4]; float texcoord[2]; float rgba[4]; } vertex;
+
+static const vertex vertex_list[] =
+{
+    // FIXME: just chop bottom 16px of texture for now
+    { { -16.0f +   0.0f, 32.0f +   0.0f, 0.5f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+    { { -16.0f + 256.0f, 32.0f + 256.0f, 0.5f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+    { { -16.0f +   0.0f, 32.0f + 256.0f, 0.5f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+    { { -16.0f +   0.0f, 32.0f +   0.0f, 0.5f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+    { { -16.0f + 256.0f, 32.0f +   0.0f, 0.5f, 1.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+    { { -16.0f + 256.0f, 32.0f + 256.0f, 0.5f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } }
+};
+
+static PrintConsole sConsole;
+static void gfx_citro3d_init_minimap(void)
+{
+    // consoleSelect(consoleInit(GFX_BOTTOM, &sConsole));
+}
+
+static uint8_t *current_texture;
+static size_t current_texture_size;
+
+static void gfx_citro3d_load_minimap_texture()
+{
+    uint8_t *cur_tex = current_texture;
+    minimap_load_current_texture(&current_texture, &current_texture_size);
+    if (cur_tex != current_texture)
+    {
+        loadTextureFromMem(&minimap_tex, NULL, current_texture, current_texture_size);
+        C3D_TexSetFilter(&minimap_tex, GPU_LINEAR, GPU_NEAREST);
+        C3D_TexFlush(&minimap_tex);
+    }
+}
+
+static void gfx_citro3d_draw_minimap_background()
+{
+    Mtx_Identity(&modelView);
+    Mtx_Identity(&projLeft);
+
+    Mtx_Ortho(&projLeft, 0.0, 240.0, 320.0, 0.0, 0.0, -1.0, false);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_modelView, &modelView);
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projLeft);
+
+    memcpy(sVboBuffer, vertex_list, sizeof(vertex_list));
+
+    gfx_citro3d_load_minimap_texture();
+    C3D_TexBind(0, &minimap_tex);
+
+    C3D_TexEnv* env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(env);
+    C3D_TexEnvColor(env, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+    C3D_TexEnvSrc(env, C3D_Both, GPU_TEXTURE0, 0, 0);
+
+    C3D_DrawArrays(GPU_TRIANGLES, 0, 2*3); // 2 triangles
+}
+
+static void gfx_citro3d_draw_minimap_mario()
+{
+    float mario_x, mario_y = 0.0f;
+
+    // returns false if mario is not in a level
+    if (!minimap_get_mario_position(&mario_x, &mario_y))
+        return;
+
+    // TODO: do this better
+    float* mario_buf = (float *) malloc(6 * VERTEX_SHADER_SIZE * sizeof(float));
+    float x_offset = 32.0f;
+    float y_offset = 0.0f;
+    float x_size = 2.0f;
+    float y_size = 2.0f;
+    u8 offset = 0;
+    // t1, 0
+    mario_buf[offset++] = x_offset + mario_x - x_size;
+    mario_buf[offset++] = y_offset + mario_y - y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    // t1, 1
+    mario_buf[offset++] = x_offset + mario_x + x_size;
+    mario_buf[offset++] = y_offset + mario_y + y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    // t1, 2
+    mario_buf[offset++] = x_offset + mario_x - x_size;
+    mario_buf[offset++] = y_offset + mario_y + y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    // t2, 0
+    mario_buf[offset++] = x_offset + mario_x - x_size;
+    mario_buf[offset++] = y_offset + mario_y - y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    // t2, 1
+    mario_buf[offset++] = x_offset + mario_x + x_size;
+    mario_buf[offset++] = y_offset + mario_y - y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    // t2, 2
+    mario_buf[offset++] = x_offset + mario_x + x_size;
+    mario_buf[offset++] = y_offset + mario_y + y_size;
+    mario_buf[offset++] = 0.5f;
+    mario_buf[offset++] = 1.0f;
+    mario_buf[offset++] = 0.0f; // no tex
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f; // rgba
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 0.0f;
+    mario_buf[offset++] = 1.0f;
+
+    Mtx_Identity(&modelView);
+
+    Mtx_OrthoTilt(&projLeft, 0.0, 320.0, 240.0, 0.0, 0.0, 1.0, true);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_modelView, &modelView);
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uLoc_projection, &projLeft);
+
+    memcpy(sVboBuffer + 6 * VERTEX_SHADER_SIZE * sizeof(float), mario_buf, 6 * VERTEX_SHADER_SIZE * sizeof(float));
+
+    C3D_TexEnv* env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(env);
+    C3D_TexEnvColor(env, 0);
+    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+    C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR);
+    C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA);
+
+    C3D_DrawArrays(GPU_TRIANGLES, 2*3, 2*3); // 2 triangles
+}
+
+static void gfx_citro3d_draw_minimap()
+{
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
+    C3D_RenderTargetClear(gTargetBottom, C3D_CLEAR_ALL, 0x000000FF, 0xFFFFFFFF);
+    C3D_FrameDrawOn(gTargetBottom);
+
+    gfx_citro3d_draw_minimap_background();
+    gfx_citro3d_draw_minimap_mario();
 
     C3D_FrameEnd(0);
-    if (C3D_GetProcessingTime() < 1000.0f / target_fps)
-        gspWaitForVBlank();
+}
+
+static void gfx_citro3d_end_frame(void)
+{
+    // end of top screen
+    C3D_FrameEnd(0);
+
+    // do bottom screen
+    gfx_citro3d_draw_minimap();
+    // float target_fps = 60.0f;
+    // if ((processing_time + C3D_GetProcessingTime()) < 1000.0f / target_fps)
+    //     gspWaitForVBlank();
 }
 
 static void gfx_citro3d_finish_render(void)

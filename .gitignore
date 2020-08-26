@@ -38,6 +38,8 @@
 *.cia
 *.cxi
 *.3dsx
+*_t3x.h
+*.t3x
 
 # datadump
 /tools/ddump/*
