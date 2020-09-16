@@ -3,14 +3,16 @@
 
 #include "controller_api.h"
 
-static FILE *fp;
+static FILE *fp = NULL;
 
 static void tas_init(void) {
+#if !defined(TARGET_DC)
     fp = fopen("cont.m64", "rb");
     if (fp != NULL) {
         uint8_t buf[0x400];
         fread(buf, 1, sizeof(buf), fp);
     }
+#endif
 }
 
 static void tas_read(OSContPad *pad) {
