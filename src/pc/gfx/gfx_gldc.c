@@ -384,10 +384,13 @@ static void gfx_opengl_set_sampler_parameters(int tile, bool linear_filter, uint
 }
 
 static void gfx_opengl_set_depth_test(bool depth_test) {
+#if 0
     if (depth_test)
         glEnable(GL_DEPTH_TEST);
     else
         glDisable(GL_DEPTH_TEST);
+#endif
+
 }
 
 static void gfx_opengl_set_depth_mask(bool z_upd) {
@@ -582,8 +585,8 @@ static void gfx_opengl_init(void) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearDepth(1.0);
-    //glEnable(GL_DEPTH_TEST);
-    /glDepthFunc(GL_LEQUAL);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glShadeModel(GL_SMOOTH);
 
     glViewport(0, 0, 640, 480);
