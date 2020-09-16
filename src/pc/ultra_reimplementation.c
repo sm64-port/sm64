@@ -121,6 +121,8 @@ s32 osEepromProbe(UNUSED OSMesgQueue *mq) {
     return 1;
 }
 
+#include "120_star_save.h"
+
 s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes) {
     u8 content[512];
     s32 ret = -1;
@@ -157,7 +159,8 @@ s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes)
     }
     fclose(fp);
 #else 
-    memset(buffer, '\0', nbytes);
+    /* Bake in 120 star save */
+    memcpy(buffer, eeprom + address * 8, nbytes);
     ret = 0;
 #endif
 #endif
