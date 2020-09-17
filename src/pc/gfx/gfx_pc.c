@@ -156,6 +156,7 @@ static struct RenderingState {
 struct GfxDimensions gfx_current_dimensions;
 
 static bool dropped_frame;
+static int first_2d_in_frame;
 
 static float buf_vbo[MAX_BUFFERED * (26 * 3)]; // 3 vertices in a triangle and 26 floats per vtx
 static size_t buf_vbo_len;
@@ -888,14 +889,15 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
             buf_vbo[buf_vbo_len++] = u / tex_width;
             buf_vbo[buf_vbo_len++] = v / tex_height;
         }
-        
+        /*@Note: no fog at the moment */
+        #if 0
         if (use_fog) {
             buf_vbo[buf_vbo_len++] = rdp.fog_color.r / 255.0f;
             buf_vbo[buf_vbo_len++] = rdp.fog_color.g / 255.0f;
             buf_vbo[buf_vbo_len++] = rdp.fog_color.b / 255.0f;
             buf_vbo[buf_vbo_len++] = v_arr[i]->color.a / 255.0f; // fog factor (not alpha)
         }
-
+        #endif
         struct RGBA white = (struct RGBA){0xff, 0xff, 0xff, 0xff};
         struct RGBA *color = &white;
         struct RGBA tmp;
@@ -926,7 +928,8 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                         color = &white;
                         break;
                 }
-                
+                /*@Note: no fog at the moment */
+                #if 0
                 if (k == 0) {
                     buf_vbo[buf_vbo_len++] = color->r / 255.0f;
                     buf_vbo[buf_vbo_len++] = color->g / 255.0f;
@@ -939,14 +942,15 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                         buf_vbo[buf_vbo_len++] = color->a / 255.0f;
                     }
                 }
-
+                #endif
             }
         }
         //struct RGBA *color = &v_arr[i]->color;
-        /*buf_vbo[buf_vbo_len++] = color->r / 255.0f;
+        buf_vbo[buf_vbo_len++] = color->r / 255.0f;
         buf_vbo[buf_vbo_len++] = color->g / 255.0f;
         buf_vbo[buf_vbo_len++] = color->b / 255.0f;
-        buf_vbo[buf_vbo_len++] = color->a / 255.0f;*/
+        //buf_vbo[buf_vbo_len++] = color->a / 255.0f;
+        buf_vbo[buf_vbo_len++] = color->a / 255.0f;
     }
     if (++buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
@@ -1218,6 +1222,20 @@ static void gfx_dp_set_fill_color(uint32_t packed_color) {
     rdp.fill_color.a = a * 255;
 }
 
+void gfx_opengl_2d_projection(void) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+void gfx_opengl_reset_projection(void) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf((const float*)rsp.P_matrix);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf((const float*)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
+}
+
 static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lry) {
     uint32_t saved_other_mode_h = rdp.other_mode_h;
     uint32_t cycle_type = (rdp.other_mode_h & (3U << G_MDSFT_CYCLETYPE));
@@ -1225,6 +1243,8 @@ static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lr
     if (cycle_type == G_CYC_COPY) {
         rdp.other_mode_h = (rdp.other_mode_h & ~(3U << G_MDSFT_TEXTFILT)) | G_TF_POINT;
     }
+    /*@Note: for 2d HUD, needs more investigation */
+    //gfx_opengl_2d_projection();
     
     // U10.2 coordinates
     float ulxf = ulx;
@@ -1244,26 +1264,55 @@ static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lr
     struct LoadedVertex* ll = &rsp.loaded_vertices[MAX_VERTICES + 1];
     struct LoadedVertex* lr = &rsp.loaded_vertices[MAX_VERTICES + 2];
     struct LoadedVertex* ur = &rsp.loaded_vertices[MAX_VERTICES + 3];
+#if 0
+    printf("2d ul[ %2.2f, %2.2f]\t lr[ %2.2f, %2.2f] "
+        "=> ul[ %2.2f, %2.2f]\t lr[ %2.2f, %2.2f]  \n", ulxf,ulyf, lrxf, lryf, (ulxf+1.0f)*320, (ulyf+1.0f)*240, (lrxf+1.0f)*320, (lryf+1.0f)*240);
     
+    ulxf = (ulxf+1.0f)*320;
+    ulyf = (ulyf+1.0f)*240;
+    lrxf = (lrxf+1.0f)*320;
+    lryf = (lryf+1.0f)*240;
+#endif
+
     ul->x = ulxf;
     ul->y = ulyf;
     ul->z = -1.0f;
     ul->w = 1.0f;
+
+    ul->_x = ulxf;
+    ul->_y = ulyf;
+    ul->_z = -1.0f;
+    ul->_w = 1.0f;
     
     ll->x = ulxf;
     ll->y = lryf;
     ll->z = -1.0f;
     ll->w = 1.0f;
     
+    ll->_x = ulxf;
+    ll->_y = lryf;
+    ll->_z = -1.0f;
+    ll->_w = 1.0f;
+
     lr->x = lrxf;
     lr->y = lryf;
     lr->z = -1.0f;
     lr->w = 1.0f;
-    
+
+    lr->_x = lrxf;
+    lr->_y = lryf;
+    lr->_z = -1.0f;
+    lr->_w = 1.0f;
+
     ur->x = lrxf;
     ur->y = ulyf;
     ur->z = -1.0f;
     ur->w = 1.0f;
+
+    ur->_x = lrxf;
+    ur->_y = ulyf;
+    ur->_z = -1.0f;
+    ur->_w = 1.0f;
     
     // The coordinates for texture rectangle shall bypass the viewport setting
     struct XYWidthHeight default_viewport = {0, 0, gfx_current_dimensions.width, gfx_current_dimensions.height};
@@ -1276,7 +1325,10 @@ static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lr
     
     gfx_sp_tri1(MAX_VERTICES + 0, MAX_VERTICES + 1, MAX_VERTICES + 3);
     gfx_sp_tri1(MAX_VERTICES + 1, MAX_VERTICES + 2, MAX_VERTICES + 3);
-    
+    /*@Note: for 2d HUD, needs more investigation */
+    //gfx_flush();
+    //gfx_opengl_reset_projection();
+
     rsp.geometry_mode = geometry_mode_saved;
     rdp.viewport = viewport_saved;
     rdp.viewport_or_scissor_changed = true;
@@ -1641,6 +1693,12 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
     for (size_t i = 0; i < sizeof(precomp_shaders) / sizeof(uint32_t); i++) {
         gfx_lookup_or_create_shader_program(precomp_shaders[i]);
     }
+    gfx_wapi->get_dimensions(&gfx_current_dimensions.width, &gfx_current_dimensions.height);
+    if (gfx_current_dimensions.height == 0) {
+        // Avoid division by zero
+        gfx_current_dimensions.height = 1;
+    }
+    gfx_current_dimensions.aspect_ratio = (float)gfx_current_dimensions.width / (float)gfx_current_dimensions.height;
 }
 
 struct GfxRenderingAPI *gfx_get_current_rendering_api(void) {
@@ -1649,12 +1707,9 @@ struct GfxRenderingAPI *gfx_get_current_rendering_api(void) {
 
 void gfx_start_frame(void) {
     gfx_wapi->handle_events();
-    gfx_wapi->get_dimensions(&gfx_current_dimensions.width, &gfx_current_dimensions.height);
-    if (gfx_current_dimensions.height == 0) {
-        // Avoid division by zero
-        gfx_current_dimensions.height = 1;
-    }
-    gfx_current_dimensions.aspect_ratio = (float)gfx_current_dimensions.width / (float)gfx_current_dimensions.height;
+    /*@Note: for 2d HUD, needs more investigation */
+    //gfx_opengl_reset_projection();
+    first_2d_in_frame = 0;
 }
 
 void gfx_run(Gfx *commands) {
