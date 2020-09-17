@@ -1,3 +1,4 @@
+#if defined(TARGET_DC)
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1739,3 +1740,4 @@ void gfx_end_frame(void) {
         gfx_wapi->swap_buffers_end();
     }
 }
+#endif
