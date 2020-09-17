@@ -2486,11 +2486,12 @@ void print_hud_pause_colorful_str(void) {
 #endif
 
     gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
-    
+#if defined(TARGET_PSP)
     /* Render sound type here */
     extern int volatile *mediaengine_sound_ptr;
     print_text(0, 0, "SOUND:");
     print_text(0 + (4 * 16), 0, ((*mediaengine_sound_ptr) ? "ME" : "CPU"));
+#endif
 }
 
 void render_pause_castle_course_stars(s16 x, s16 y, s16 fileNum, s16 courseNum) {

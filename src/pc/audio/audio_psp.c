@@ -1,4 +1,4 @@
-
+#if defined(TARGET_PSP)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,3 +91,4 @@ struct AudioAPI audio_psp = {
     audio_psp_get_desired_buffered,
     audio_psp_play
 };
+#endif

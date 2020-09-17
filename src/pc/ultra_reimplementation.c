@@ -196,6 +196,9 @@ s32 osEepromLongWrite(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes
 #if !defined(TARGET_DC)
     FILE* fp = fopen("sm64_save_file.bin", "wb");
     if (fp == NULL) {
+        return -1;
+    }
+    s32 ret = fwrite(content, 1, 512, fp) == 512 ? 0 : -1;
     fclose(fp);
 #else
     s32 ret = 0;

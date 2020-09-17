@@ -1,3 +1,4 @@
+#if defined(TARGET_PSP)
 #include <stdio.h>
 
 #include "psp_audio_stack.h"
@@ -69,3 +70,4 @@ AudioTask stack_peek(struct Stack *stack) {
 void stack_clear(struct Stack *stack) {
     stack->top = -1;
 }
+#endif

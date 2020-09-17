@@ -7,7 +7,7 @@
  * Copyright (c) 2020 Hayden Kowalchuk, Hayden Kowalchuk
  * License: BSD 3-clause "New" or "Revised" License, http://www.opensource.org/licenses/BSD-3-Clause
  */
-
+#if defined(TARGET_PSP)
 #include "psp_texture_manager.h"
 #include <string.h>
 #include <pspkernel.h>
@@ -223,3 +223,4 @@ void texman_bind_tex(unsigned int num) {
 unsigned int texman_get_bound(void) {
     return psp_tex_bound;
 }
+#endif
