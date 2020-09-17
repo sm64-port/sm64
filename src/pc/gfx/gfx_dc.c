@@ -10,8 +10,8 @@
 #define SCR_WIDTH (640)
 #define SCR_HEIGHT (480)
 
-//static int force_30fps = 1;
-//static unsigned int last_time = 0;
+static int force_30fps = 1;
+static unsigned int last_time = 0;
 
 extern void glKosSwapBuffers(void);
 
@@ -28,9 +28,19 @@ int isspace(int _c) {
     return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 
+extern uint64_t timer_ms_gettime64(void);
+unsigned int GetSystemTimeLow(void) {
+    uint64_t msec = timer_ms_gettime64();
+    return (unsigned int) msec;
+}
+
+void DelayThread(unsigned int ms) {
+    timer_spin_sleep(ms);
+}
+
 static void gfx_dc_init(UNUSED const char *game_name, UNUSED bool start_in_fullscreen) {
     /* init */
-    // last_time = sceKernelGetSystemTimeLow();
+    last_time = GetSystemTimeLow();
 }
 
 static void
@@ -59,7 +69,7 @@ static void gfx_dc_get_dimensions(uint32_t *width, uint32_t *height) {
 /* What events should we be handling? */
 static void gfx_dc_handle_events(void) {
     /* Lets us yield to other threads*/
-    // sceKernelDelayThread(100);
+    // DelayThread(100);
 }
 
 static bool gfx_dc_start_frame(void) {
@@ -67,10 +77,9 @@ static bool gfx_dc_start_frame(void) {
 }
 
 static void gfx_dc_swap_buffers_begin(void) {
-#if 0
     // Number of microseconds a frame should take (30 fps)
     const unsigned int FRAME_TIME_US = 33333;
-    const unsigned int cur_time = sceKernelGetSystemTimeLow();
+    const unsigned int cur_time = GetSystemTimeLow();
     const unsigned int elapsed = cur_time - last_time;
     last_time = cur_time;
 
@@ -79,16 +88,15 @@ static void gfx_dc_swap_buffers_begin(void) {
 #ifdef DEBUG
             printf("elapsed %d us fps %f\n", elapsed, (1000.0f * 1000.0f) / elapsed);
 #endif
-            sceKernelDelayThread(FRAME_TIME_US - elapsed);
+            DelayThread((FRAME_TIME_US - elapsed) / 1000);
             last_time = cur_time + (FRAME_TIME_US - elapsed);
         }
     }
-#endif
 }
 
 static void gfx_dc_swap_buffers_end(void) {
     /* Lets us yield to other threads*/
-    // sceKernelDelayThread(100);
+    // DelayThread(100);
     glKosSwapBuffers();
 }
 
