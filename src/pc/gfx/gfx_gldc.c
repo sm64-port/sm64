@@ -336,7 +336,6 @@ static unsigned int __attribute__((aligned(16))) scaled[256 * 256 * sizeof(unsig
 
 static inline void *gfx_opengl_scale_texture(const uint8_t *data, const int w, const int h, const int to_w, const int to_h) {
     resample_32bit((const uint32_t *)data, w, h, (uint32_t*)scaled, to_w, to_h);
-
     return scaled;
 }
 
@@ -344,8 +343,23 @@ static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int 
     if (!gl_npot) {
         // we don't support non power of two textures, scale to next power of two if necessary
         if (!is_pot(width) || !is_pot(height)) {
-            const int pwidth = next_pot(width);
-            const int pheight = next_pot(height);
+            int pwidth = next_pot(width);
+            int pheight = next_pot(height);
+            /*@Note: Might not need texture max sizes */
+            if(pwidth > 32){
+                pwidth = 32;
+            }
+            if(pheight > 32){
+                pheight = 32;
+            }
+
+            /* Need texture min sizes */
+            if(pwidth < 8){
+                pwidth = 8;
+            }
+            if(pheight < 8){
+                pheight = 8;
+            }
             rgba32_buf = gfx_opengl_scale_texture(rgba32_buf, width, height, pwidth, pheight);
             width = pwidth;
             height = pheight;
@@ -384,13 +398,10 @@ static void gfx_opengl_set_sampler_parameters(int tile, bool linear_filter, uint
 }
 
 static void gfx_opengl_set_depth_test(bool depth_test) {
-#if 0
     if (depth_test)
         glEnable(GL_DEPTH_TEST);
     else
         glDisable(GL_DEPTH_TEST);
-#endif
-
 }
 
 static void gfx_opengl_set_depth_mask(bool z_upd) {
@@ -534,18 +545,18 @@ static void gfx_opengl_init(void) {
         sys_fatal("could not init GLEW:\n%s", glewGetErrorString(err));
 #endif
 
-    /*
     GLdcConfig config;
     glKosInitConfig(&config);
     config.autosort_enabled = GL_TRUE;
     config.fsaa_enabled = GL_FALSE;
-    config.initial_op_capacity = 4096;
-    config.initial_pt_capacity = 0;
-    config.initial_tr_capacity = 1024;
+    /*@Note: These should be adjusted at some point */
+    config.initial_op_capacity = 4096+2048;
+    config.initial_pt_capacity = 1024+512;
+    config.initial_tr_capacity = 1024+512;
     config.initial_immediate_capacity = 0;
     glKosInitEx(&config);
-    */
-    glKosInit();
+    
+    //glKosInit();
 
     // check GL version
     int vmajor, vminor;
