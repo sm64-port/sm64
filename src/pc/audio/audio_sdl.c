@@ -5,6 +5,7 @@
 #else
 #include "SDL2/SDL.h"
 #endif
+#include <stdio.h>
 
 #include "audio_api.h"
 

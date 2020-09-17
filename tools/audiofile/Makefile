@@ -7,6 +7,6 @@ audiofile.o: audiofile.cpp audiofile.h aupvlist.h
 	$(CXX) -std=c++11 -O2 -I. -c audiofile.cpp
 
 clean:
-	rm -f audiofile.o libaudiofile.a
+	$(RM) -f audiofile.o libaudiofile.a
 
 .PHONY: clean

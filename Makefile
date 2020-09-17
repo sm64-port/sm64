@@ -481,8 +481,14 @@ else # TARGET_N64
 AS := as
 # HOST_ tools are for building sound/sequences/00_sound_player.s on PSP
 # as psp-as errors out due to relocation issues with the 'assembly'
+ifeq ($(TARGET_DC),1)
 HOST_AS      := kos-as
 HOST_OBJCOPY := sh-elf-objcopy
+else
+HOST_AS      := as
+HOST_OBJCOPY := objcopy
+endif
+
 ifneq ($(TARGET_WEB),1)
   CC := gcc
   CXX := g++
@@ -940,6 +946,7 @@ endif
 ifeq ($(TARGET_DC),1)
 	sh-elf-objcopy -R .stack -O binary $@ $@.bin
 
+# Unused for now, might be later
 #include $(KOS_BASE)/Makefile.rules
 #elf: $(EXE)
 #	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(EXE).elf $(KOS_START) \

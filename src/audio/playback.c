@@ -980,7 +980,8 @@ void reclaim_notes(void) {
 
     for (i = 0; i < gMaxSimultaneousNotes; i++) {
         note = &gNotes[i];
-        if (note->parentLayer != NO_LAYER) {
+        /* Hit a null pointer here once */
+        if ((note->parentLayer != NO_LAYER) && (note->parentLayer != NULL) ) {
             cond = FALSE;
             if (!note->parentLayer->enabled && note->priority >= NOTE_PRIORITY_MIN) {
                 cond = TRUE;

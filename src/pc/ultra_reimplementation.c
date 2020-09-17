@@ -74,9 +74,18 @@ void osViSetSpecialFeatures(UNUSED u32 func) {
 void osViSwapBuffer(UNUSED void *vaddr) {
 }
 
+#if defined(TARGET_PSP)
+#include <psprtc.h>
+OSTime osGetTime(void) {
+    long long unsigned int temp;
+    sceRtcGetCurrentTick(&temp);
+    return (unsigned int) ((temp) & 0xffffffff);
+}
+#else 
 OSTime osGetTime(void) {
     return 0;
 }
+#endif
 
 void osWritebackDCacheAll(void) {
 }

@@ -105,6 +105,177 @@ static inline int32_t clamp32(int64_t v) {
     return (int32_t)v;
 }
 
+void memcpy4(void *dest, const void *src, size_t count);
+#if defined(TARGET_PSP)
+void memcpy_vfpu( void* dst, const void* src, size_t size )
+{
+    //less than 16bytes or there is no 32bit alignment -> not worth optimizing
+	if( ((u32)src&0x3) != ((u32)dst&0x3) && (size<16) )
+    {
+        memcpy( dst, src, size );
+        return;
+    }
+
+    u8* src8 = (u8*)src;
+    u8* dst8 = (u8*)dst;
+
+	// Align dst to 4 bytes or just resume if already done
+	while( ((u32)dst8&0x3)!=0 )
+	{
+		*dst8++ = *src8++;
+		size--;
+	}
+
+	u32 *dst32=(u32*)dst8;
+	u32 *src32=(u32*)src8;
+
+	// Align dst to 16 bytes or just resume if already done
+	while( ((u32)dst32&0xF)!=0 )
+	{
+		*dst32++ = *src32++;
+		size -= 4;
+	}
+
+	dst8=(u8*)dst32;
+	src8=(u8*)src32;
+
+	if( ((u32)src8&0xF)==0 )	//Both src and dst are 16byte aligned
+	{
+		while (size>63)
+		{
+			asm(".set	push\n"					// save assembler option
+				".set	noreorder\n"			// suppress reordering
+				"lv.q c000, 0(%1)\n"
+				"lv.q c010, 16(%1)\n"
+				"lv.q c020, 32(%1)\n"
+				"lv.q c030, 48(%1)\n"
+				"sv.q c000, 0(%0)\n"
+				"sv.q c010, 16(%0)\n"
+				"sv.q c020, 32(%0)\n"
+				"sv.q c030, 48(%0)\n"
+				"addiu  %2, %2, -64\n"			//size -= 64;
+				"addiu	%1, %1, 64\n"			//dst8 += 64;
+				"addiu	%0, %0, 64\n"			//src8 += 64;
+				".set	pop\n"					// restore assembler option
+				:"+r"(dst8),"+r"(src8),"+r"(size)
+				:
+				:"memory"
+				);
+		}
+
+		while (size>15)
+		{
+			asm(".set	push\n"					// save assembler option
+				".set	noreorder\n"			// suppress reordering
+				"lv.q c000, 0(%1)\n"
+				"sv.q c000, 0(%0)\n"
+				"addiu  %2, %2, -16\n"			//size -= 16;
+				"addiu	%1, %1, 16\n"			//dst8 += 16;
+				"addiu	%0, %0, 16\n"			//src8 += 16;
+				".set	pop\n"					// restore assembler option
+				:"+r"(dst8),"+r"(src8),"+r"(size)
+				:
+				:"memory"
+				);
+		}
+	}
+	else 	//At least src is 4byte and dst is 16byte aligned
+    {
+		while (size>63)
+		{
+			asm(".set	push\n"					// save assembler option
+				".set	noreorder\n"			// suppress reordering
+				"ulv.q c000, 0(%1)\n"
+				"ulv.q c010, 16(%1)\n"
+				"ulv.q c020, 32(%1)\n"
+				"ulv.q c030, 48(%1)\n"
+				"sv.q c000, 0(%0)\n"
+				"sv.q c010, 16(%0)\n"
+				"sv.q c020, 32(%0)\n"
+				"sv.q c030, 48(%0)\n"
+				"addiu  %2, %2, -64\n"			//size -= 64;
+				"addiu	%1, %1, 64\n"			//dst8 += 64;
+				"addiu	%0, %0, 64\n"			//src8 += 64;
+				".set	pop\n"					// restore assembler option
+				:"+r"(dst8),"+r"(src8),"+r"(size)
+				:
+				:"memory"
+				);
+		}
+
+		while (size>15)
+		{
+			asm(".set	push\n"					// save assembler option
+				".set	noreorder\n"			// suppress reordering
+				"ulv.q c000, 0(%1)\n"
+				"sv.q c000, 0(%0)\n"
+				"addiu  %2, %2, -16\n"			//size -= 16;
+				"addiu	%1, %1, 16\n"			//dst8 += 16;
+				"addiu	%0, %0, 16\n"			//src8 += 16;
+				".set	pop\n"					// restore assembler option
+				:"+r"(dst8),"+r"(src8),"+r"(size)
+				:
+				:"memory"
+				);
+		}
+    }
+
+	// Most copies are completed with the VFPU, so fast out
+	if (size == 0)
+		return;
+
+	dst32=(u32*)dst8;
+	src32=(u32*)src8;
+
+	//Copy remaning 32bit...
+	while( size>3 )
+	{
+		*dst32++ = *src32++;
+		size -= 4;
+	}
+
+	dst8=(u8*)dst32;
+	src8=(u8*)src32;
+
+	//Copy remaning bytes if any...
+	while( size>0 )
+    {
+        *dst8++ = *src8++;
+        size--;
+    }
+}
+
+void __attribute__((noinline))  memcpy_vfpu_simple(void *dst, void *src, size_t size) 
+{
+    __asm__ volatile (
+    "loop:\n"
+        "beqz %2, loop_end\n"
+        "lv.q C200, 0(%1)\n"
+        "sv.q C200, 0(%0)\n"
+        "addiu %0, %0, 16\n"
+        "addiu %1, %1, 16\n"
+        "addiu %2, %2, -16\n"
+        "b loop\n"
+    "loop_end:\n" ::
+    "r"(dst), "r"( src), "r"(size));
+}
+#else
+void memcpy_vfpu( void* dst, const void* src, unsigned int size )
+{
+	memcpy( dst, src, size );
+}
+#endif
+
+void memcpy4(void *dest, const void *src, size_t count)
+{
+	unsigned long *tmp = (unsigned long *) dest;
+	unsigned long *s = (unsigned long *) src;
+	count = count/4;
+
+	while (count--)
+		*tmp++ = *s++;
+}
+
 void aClearBufferImpl(uint16_t addr, int nbytes) {
     nbytes = ROUND_UP_16(nbytes);
     memset(rspa.buf.as_u8 + addr, 0, nbytes);
@@ -206,6 +377,7 @@ void aSetLoopImpl(ADPCM_STATE *adpcm_loop_state) {
     rspa.adpcm_loop_state = adpcm_loop_state;
 }
 
+/*@Note: Little Slowdown */
 void aADPCMdecImpl(uint8_t flags, ADPCM_STATE state) {
 #if HAS_SSE41
     const __m128i tblrev = _mm_setr_epi8(12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1, -1, -1);
@@ -374,6 +546,7 @@ void aADPCMdecImpl(uint8_t flags, ADPCM_STATE state) {
     memcpy(state, out - 16, 16 * sizeof(int16_t));
 }
 
+/*@Note: Decent Slowdown */
 void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
     int16_t tmp[16];
     int16_t *in_initial = rspa.buf.as_s16 + rspa.in / sizeof(int16_t);
@@ -527,6 +700,7 @@ void aResampleImpl(uint8_t flags, uint16_t pitch, RESAMPLE_STATE state) {
 }
 
 
+/*@Note: Much Slowdown */
 void aEnvMixerImpl(uint8_t flags, ENVMIX_STATE state) {
     int16_t *in = rspa.buf.as_s16 + rspa.in / sizeof(int16_t);
     int16_t *dry[2] = {rspa.buf.as_s16 + rspa.out / sizeof(int16_t), rspa.buf.as_s16 + rspa.dry_right / sizeof(int16_t)};
@@ -787,6 +961,7 @@ void aEnvMixerImpl(uint8_t flags, ENVMIX_STATE state) {
 #endif
 }
 
+/*@Note: Yes Slowdown */
 void aMixImpl(int16_t gain, uint16_t in_addr, uint16_t out_addr) {
     int nbytes = ROUND_UP_32(rspa.nbytes);
     int16_t *in = rspa.buf.as_s16 + in_addr / sizeof(int16_t);

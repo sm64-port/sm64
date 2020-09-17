@@ -12,6 +12,15 @@ Vec4s *gSplineKeyframe;
 float gSplineKeyframeFraction;
 int gSplineState;
 
+/* Used instead of foo == 0.0f because thats weak */
+static const float ROUNDING_ERROR_f32 = 0.00001f;
+
+//! returns if a equals b, taking possible rounding errors into account
+static inline int equals(const float a, const float b)
+{
+        return (a + ROUNDING_ERROR_f32 >= b) && (a - ROUNDING_ERROR_f32 <= b);
+}
+
 // These functions have bogus return values.
 // Disable the compiler warning.
 #pragma GCC diagnostic push
@@ -690,7 +699,7 @@ f32 approach_f32(f32 current, f32 target, f32 inc, f32 dec) {
 static u16 atan2_lookup(f32 y, f32 x) {
     u16 ret;
 
-    if (x == 0) {
+    if (equals(x, 0.0f) == 1) {
         ret = gArctanTable[0];
     } else {
         ret = gArctanTable[(s32)(y / x * 1024 + 0.5f)];

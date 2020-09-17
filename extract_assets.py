@@ -36,8 +36,11 @@ def asset_needs_update(asset, version):
 
 
 def remove_file(fname):
-    os.remove(fname)
-    print("deleting", fname)
+    try:
+        os.remove(fname)
+        print("deleting", fname)
+    except PermissionError:
+        print("can't delete", fname)
     try:
         os.removedirs(os.path.dirname(fname))
     except OSError:
