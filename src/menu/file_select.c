@@ -1641,8 +1641,10 @@ void handle_controller_cursor_input(void) {
  * to be usable on the file select.
  */
 void print_menu_cursor(void) {
+    extern int hack_adjust;
+
     handle_controller_cursor_input();
-    create_dl_translation_matrix(MENU_MTX_PUSH, sCursorPos[0] + 160.0f - 5.0, sCursorPos[1] + 120.0f - 25.0, 0.0f);
+    create_dl_translation_matrix(MENU_MTX_PUSH, sCursorPos[0] + 160.0f - 5.0 + hack_adjust, sCursorPos[1] + 120.0f - 25.0, 0.0f);
     // Get the right graphic to use for the cursor.
     if (sCursorClickingTimer == 0)
         // Idle
@@ -2710,11 +2712,12 @@ void print_score_file_star_score(s8 fileIndex, s16 courseIndex, s16 x, s16 y) {
  * Prints file select strings depending on the menu selected.
  * Also checks if all saves exists and defines text and main menu timers.
  */
+extern void create_dl_ortho_matrix_menu_hack(void);
 static void print_file_select_strings(void) {
     UNUSED s32 unused1;
     UNUSED s32 unused2;
 
-    create_dl_ortho_matrix();
+    create_dl_ortho_matrix_menu_hack();
     switch (sSelectedButtonID) {
         case MENU_BUTTON_NONE:
 #ifdef VERSION_EU

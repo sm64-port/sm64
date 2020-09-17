@@ -215,16 +215,16 @@ int render_screen_transition(s8 fadeTimer, s8 transType, u8 transTime, struct Wa
             return render_fade_transition_into_color(fadeTimer, transTime, transData);
             break;
         case WARP_TRANSITION_FADE_FROM_STAR:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_STAR, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_STAR, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_INTO_STAR:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_STAR, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_STAR, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_FROM_CIRCLE:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_CIRCLE, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_CIRCLE, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_INTO_CIRCLE:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_CIRCLE, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_CIRCLE, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_FROM_MARIO:
             return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_MARIO, TRANS_TYPE_CLAMP);
@@ -233,15 +233,21 @@ int render_screen_transition(s8 fadeTimer, s8 transType, u8 transTime, struct Wa
             return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_MARIO, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_FROM_BOWSER:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_BOWSER, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_BOWSER, TRANS_TYPE_CLAMP);
             break;
         case WARP_TRANSITION_FADE_INTO_BOWSER:
-            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_BOWSER, TRANS_TYPE_MIRROR);
+            return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_BOWSER, TRANS_TYPE_CLAMP);
             break;
     }
 }
 
 Gfx *render_cannon_circle_base(void) {
+#if defined(TARGET_PSP)
+    #define WS_ADJUST (64)
+#else
+    #define WS_ADJUST (0)
+#endif
+
 #ifdef WIDESCREEN
     Vtx *verts = alloc_display_list(8 * sizeof(*verts));
     Gfx *dlist = alloc_display_list(20 * sizeof(*dlist));
@@ -252,24 +258,24 @@ Gfx *render_cannon_circle_base(void) {
     Gfx *g = dlist;
 
     if (verts != NULL && dlist != NULL) {
-        make_vertex(verts, 0, 0, 0, -1, -1152, 1824, 0, 0, 0, 255);
-        make_vertex(verts, 1, SCREEN_WIDTH, 0, -1, 1152, 1824, 0, 0, 0, 255);
-        make_vertex(verts, 2, SCREEN_WIDTH, SCREEN_HEIGHT, -1, 1152, 192, 0, 0, 0, 255);
-        make_vertex(verts, 3, 0, SCREEN_HEIGHT, -1, -1152, 192, 0, 0, 0, 255);
+        make_vertex(verts, 0, WS_ADJUST, 0, -1, 192, 1824, 0, 0, 0, 255);
+        make_vertex(verts, 1, SCREEN_WIDTH-WS_ADJUST, 0, -1, 1824, 1824, 0, 0, 0, 255);
+        make_vertex(verts, 2, SCREEN_WIDTH-WS_ADJUST, SCREEN_HEIGHT, -1, 1824, 192, 0, 0, 0, 255);
+        make_vertex(verts, 3, WS_ADJUST, SCREEN_HEIGHT, -1, 192, 192, 0, 0, 0, 255);
 
 #ifdef WIDESCREEN
         // Render black rectangles outside the 4:3 area.
-        make_vertex(verts, 4, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), 0, -1, 0, 0, 0, 0, 0, 255);
-        make_vertex(verts, 5, GFX_DIMENSIONS_FROM_RIGHT_EDGE(0), 0, -1, 0, 0, 0, 0, 0, 255);
+        make_vertex(verts, 4, 0/*GFX_DIMENSIONS_FROM_LEFT_EDGE(0)*/, 0, -1, 0, 0, 0, 0, 0, 255);
+        make_vertex(verts, 5,GFX_DIMENSIONS_FROM_RIGHT_EDGE(0), 0, -1, 0, 0, 0, 0, 0, 255);
         make_vertex(verts, 6, GFX_DIMENSIONS_FROM_RIGHT_EDGE(0), SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
-        make_vertex(verts, 7, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
+        make_vertex(verts, 7, 0/*GFX_DIMENSIONS_FROM_LEFT_EDGE(0)*/, SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
 #endif
 
         gSPDisplayList(g++, dl_proj_mtx_fullscreen);
         gDPSetCombineMode(g++, G_CC_MODULATEIDECALA, G_CC_MODULATEIDECALA);
         gDPSetTextureFilter(g++, G_TF_BILERP);
-        gDPLoadTextureBlock(g++, sTextureTransitionID[TEX_TRANS_CIRCLE], G_IM_FMT_IA, G_IM_SIZ_8b, 32, 64, 0,
-            G_TX_WRAP | G_TX_MIRROR, G_TX_WRAP | G_TX_MIRROR, 5, 6, G_TX_NOLOD, G_TX_NOLOD);
+        gDPLoadTextureBlock(g++, sTextureTransitionID[TEX_TRANS_CIRCLE], G_IM_FMT_IA, G_IM_SIZ_8b, 64, 64, 0,
+            G_TX_CLAMP, G_TX_CLAMP, 6, 6, G_TX_NOLOD, G_TX_NOLOD);
         gSPTexture(g++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
         gSPVertex(g++, VIRTUAL_TO_PHYSICAL(verts), 4, 0);
         gSPDisplayList(g++, dl_draw_quad_verts_0123);
@@ -277,7 +283,7 @@ Gfx *render_cannon_circle_base(void) {
 #ifdef WIDESCREEN
         gDPSetCombineMode(g++, G_CC_SHADE, G_CC_SHADE);
         gSPVertex(g++, VIRTUAL_TO_PHYSICAL(verts + 4), 4, 4);
-        gSP2Triangles(g++, 4, 0, 3, 0, 4, 3, 7, 0);
+        gSP2Triangles(g++, 4, 0, 7, 0, 7, 0, 3, 0);
         gSP2Triangles(g++, 1, 5, 6, 0, 1, 6, 2, 0);
 #endif
         gSPDisplayList(g++, dl_screen_transition_end);

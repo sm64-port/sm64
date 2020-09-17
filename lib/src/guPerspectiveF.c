@@ -33,6 +33,10 @@ void guPerspectiveF(float mf[4][4], u16 *perspNorm, float fovy, float aspect, fl
 void guPerspective(Mtx *m, u16 *perspNorm, float fovy, float aspect, float near, float far,
                    float scale) {
     float mat[4][4];
-    guPerspectiveF(mat, perspNorm, fovy, aspect, near, far, scale);
+#if defined(TARGET_PSP)
+    guPerspectiveF(mat, perspNorm, fovy, aspect*(1.0f/0.75555555555f), near, far, scale);
+#else 
+    guPerspectiveF(mat, perspNorm, fovy, aspect*(1.0f/0.75555555555f), near, far, scale);
+#endif
     guMtxF2L(mat, m);
 }

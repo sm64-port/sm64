@@ -216,7 +216,7 @@ void *soundAlloc(struct SoundAllocPool *pool, u32 size) {
     u8 *start;
     s32 last;
     s32 i;
-
+    /* Possible crash point */
     if ((pool->cur + ALIGN16(size) <= pool->size + pool->start)) {
         start = pool->cur;
         pool->cur += ALIGN16(size);

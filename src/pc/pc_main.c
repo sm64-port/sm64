@@ -35,6 +35,21 @@
 
 #include "compat.h"
 
+#if defined(TARGET_PSP)
+#include <pspsdk.h>
+#include <pspkernel.h>
+#define MODULE_NAME "SM64 for PSP"
+#ifndef SRC_VER
+#define SRC_VER "UNKNOWN"
+#endif
+
+PSP_MODULE_INFO(MODULE_NAME, 0, 1, 1);
+PSP_HEAP_SIZE_MAX();
+PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU);
+
+const char _srcver[] __attribute__((section (".version"), used)) = MODULE_NAME " - " SRC_VER ;
+#endif
+
 #define CONFIG_FILE "sm64config.txt"
 
 OSMesg D_80339BEC;
@@ -71,8 +86,6 @@ void send_display_list(struct SPTask *spTask) {
     gfx_run((Gfx *)spTask->task.t.data_ptr);
 }
 
-#define printf
-
 #ifdef VERSION_EU
 #define SAMPLES_HIGH 656
 #define SAMPLES_LOW 640
@@ -81,7 +94,108 @@ void send_display_list(struct SPTask *spTask) {
 #define SAMPLES_LOW 528
 #endif
 
+#if defined(TARGET_PSP)
+/* This flag enables use of the MediaEngine */
+#define ME_EXEC
+
+#include "psp_audio_stack.h"
+#include "sceGuDebugPrint.h"
+#ifdef ME_EXEC
+#include "melib.h"
+static struct Job j __attribute__((aligned(64)));
+#else 
+typedef int JobData;
+#endif
+
+static s16 audio_buffer[SAMPLES_HIGH * 2 * 2] __attribute__((aligned(64)));
+extern struct Stack* stack;
+
+int __attribute__((optimize("O0"))) run_me_audio(JobData data) {
+    (void)data;
+    create_next_audio_buffer(audio_buffer + 0 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
+    create_next_audio_buffer(audio_buffer + 1 * (SAMPLES_HIGH * 2), SAMPLES_HIGH);
+    return 0;
+}
+
+int volatile mediaengine_sound = 0;
+int volatile *mediaengine_sound_ptr = &mediaengine_sound;
+int mediaengine_available = 0;
+
+int audioOutput(SceSize args, void *argp) {
+    (void)args;
+    (void)argp;
+    bool running = true;
+#ifdef DEBUG
+    char buffer[64];
+#endif
+
+#ifdef ME_EXEC
+    if(mediaengine_available) {
+        /* Job data for MELib */
+        j.jobInfo.id = 1;
+        j.jobInfo.execMode = MELIB_EXEC_ME;
+        j.function = run_me_audio;
+        j.data = 0;
+        sceKernelDcacheWritebackInvalidateRange(&j, sizeof(j));
+        mediaengine_sound = 1;
+    }
+#endif
+
+    while (running) {
+        AudioTask task = stack_pop(stack);
+
+        #ifdef DEBUG
+        switch(task) {
+            case NOP: sceGuDebugPrint(8,8,0xffffffff, "NOP");break;
+            case QUIT: sceGuDebugPrint(8,16,0xffffffff, "QUIT");break;
+            case GENERATE: sceGuDebugPrint(8,24,0xffffffff, "GENERATE");break;
+            case PLAY: sceGuDebugPrint(8,32,0xffffffff, "PLAY");break;
+        }
+        sprintf(buffer, "SOUND: %s", (mediaengine_sound ? "ME" : "CPU"));
+        sceGuDebugPrint(10,48,0xffffffff, buffer);
+        #endif
+
+        switch (task) {
+            case NOP:       {; sceKernelDelayThread(1000 + 1000  * (mediaengine_sound)); }break;
+            case QUIT:      {; running = false; }break;
+            case GENERATE:  {;
+#ifdef ME_EXEC
+            if(mediaengine_sound){
+                J_AddJob(&j);
+                J_Update(0.0f);
+            } else
+#endif
+            {
+                run_me_audio(0);
+                sceKernelDcacheWritebackInvalidateRange(audio_buffer,sizeof(audio_buffer));
+            }
+            stack_push(stack, PLAY);
+            sceKernelDelayThread(250);
+            }
+            break;
+            case PLAY:      {;
+                //sceKernelDelayThread(100);
+                //stack_clear(stack);
+                audio_api->play((u8 *)audio_buffer, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
+            }
+            break;
+        }
+    }
+    sceIoWrite(1,"Audio Manager Exit!\n",21);
+    SceUID thid = sceKernelGetThreadId();
+    sceKernelTerminateDeleteThread(thid);
+    return 0;
+}
+#endif
+
+extern int gProcessAudio;
+int gFrame=0;
 void produce_one_frame(void) {
+#if defined(TARGET_PSP)
+    /* Generate sound */
+    stack_push(stack, GENERATE);
+#endif
+
     gfx_start_frame();
     game_loop_one_iteration();
 

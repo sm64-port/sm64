@@ -180,6 +180,9 @@ void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z) {
         gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_NOPUSH);
 }
 
+/*@Note: Used because we're trash */
+int hack_adjust = 0;
+
 void create_dl_ortho_matrix(void) {
     Mtx *matrix = (Mtx *) alloc_display_list(sizeof(Mtx));
 
@@ -195,6 +198,30 @@ void create_dl_ortho_matrix(void) {
     gSPPerspNormalize(gDisplayListHead++, 0xFFFF);
 
     gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH)
+    hack_adjust = 0;
+}
+
+void create_dl_ortho_matrix_menu_hack(void) {
+#if defined(TARGET_PSP)
+    Mtx *matrix = (Mtx *) alloc_display_list(sizeof(Mtx));
+
+    if (matrix == NULL) {
+        return;
+    }
+
+    create_dl_identity_matrix();
+
+    guOrtho(matrix, 0.0f, SCREEN_WIDTH*1.32352941177f, 0.0f, SCREEN_HEIGHT, -10.0f, 10.0f, 1.0f);
+
+    // Should produce G_RDPHALF_1 in Fast3D
+    gSPPerspNormalize(gDisplayListHead++, 0xFFFF);
+
+    gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(matrix), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH)
+
+    hack_adjust = 50;
+#else 
+    create_dl_ortho_matrix();
+#endif
 }
 
 static u8 *alloc_ia8_text_from_i1(u16 *in, s16 width, s16 height) {
@@ -373,7 +400,7 @@ void print_generic_string(s16 x, s16 y, const u8 *str) {
 #endif
 
 #ifndef VERSION_EU
-    create_dl_translation_matrix(MENU_MTX_PUSH, x, y, 0.0f);
+    create_dl_translation_matrix(MENU_MTX_PUSH, x + hack_adjust, y, 0.0f);
 #endif
 
     while (str[strPos] != DIALOG_CHAR_TERMINATOR) {
@@ -2459,6 +2486,11 @@ void print_hud_pause_colorful_str(void) {
 #endif
 
     gSPDisplayList(gDisplayListHead++, dl_rgba16_text_end);
+    
+    /* Render sound type here */
+    extern int volatile *mediaengine_sound_ptr;
+    print_text(0, 0, "SOUND:");
+    print_text(0 + (4 * 16), 0, ((*mediaengine_sound_ptr) ? "ME" : "CPU"));
 }
 
 void render_pause_castle_course_stars(s16 x, s16 y, s16 fileNum, s16 courseNum) {
