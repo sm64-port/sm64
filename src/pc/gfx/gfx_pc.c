@@ -58,7 +58,7 @@ struct XYWidthHeight {
 
 struct LoadedVertex {
     float x, y, z, w;
-//    float _x, _y, _z, _w;
+    float _x, _y, _z, _w;
     float u, v;
     struct RGBA color;
     uint8_t clip_rej;
@@ -628,14 +628,14 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         const Vtx_t *v = &vertices[i].v;
         const Vtx_tn *vn = &vertices[i].n;
         struct LoadedVertex *d = &rsp.loaded_vertices[dest_index];
-#if 0
+
         float x = v->ob[0] * rsp.MP_matrix[0][0] + v->ob[1] * rsp.MP_matrix[1][0] + v->ob[2] * rsp.MP_matrix[2][0] + rsp.MP_matrix[3][0];
         float y = v->ob[0] * rsp.MP_matrix[0][1] + v->ob[1] * rsp.MP_matrix[1][1] + v->ob[2] * rsp.MP_matrix[2][1] + rsp.MP_matrix[3][1];
         float z = v->ob[0] * rsp.MP_matrix[0][2] + v->ob[1] * rsp.MP_matrix[1][2] + v->ob[2] * rsp.MP_matrix[2][2] + rsp.MP_matrix[3][2];
         float w = v->ob[0] * rsp.MP_matrix[0][3] + v->ob[1] * rsp.MP_matrix[1][3] + v->ob[2] * rsp.MP_matrix[2][3] + rsp.MP_matrix[3][3];
 
         x = gfx_adjust_x_for_aspect_ratio(x);
-#endif
+
         short U = v->tc[0] * rsp.texture_scaling_factor.s >> 16;
         short V = v->tc[1] * rsp.texture_scaling_factor.t >> 16;
         
@@ -695,25 +695,23 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         
         // trivial clip rejection
         d->clip_rej = 0;
-#if 0
         if (x < -w) d->clip_rej |= 1;
         if (x > w) d->clip_rej |= 2;
         if (y < -w) d->clip_rej |= 4;
         if (y > w) d->clip_rej |= 8;
         if (z < -w) d->clip_rej |= 16;
         if (z > w) d->clip_rej |= 32;
-#endif
+
         d->x = v->ob[0];
         d->y = v->ob[1];
         d->z = v->ob[2];
         d->w = 1.0f;
-#if 0
+
         d->_x = x;
         d->_y = y;
         d->_z = z;
         d->_w = w;
-#endif
-#if 0
+
         if (rsp.geometry_mode & G_FOG) {
             if (fabsf(w) < 0.001f) {
                 // To avoid division by zero
@@ -732,8 +730,6 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         } else {
             d->color.a = v->cn[3];
         }
-#endif
-        d->color.a = v->cn[3];
     }
 }
 
@@ -743,7 +739,6 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     struct LoadedVertex *v3 = &rsp.loaded_vertices[vtx3_idx];
     struct LoadedVertex *v_arr[3] = {v1, v2, v3};
 
-    #if 0
     if (v1->clip_rej & v2->clip_rej & v3->clip_rej) {
         // The whole triangle lies outside the visible area
         return;
@@ -773,7 +768,6 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                 return;
         }
     }
-    #endif
 
     bool depth_test = (rsp.geometry_mode & G_ZBUFFER) == G_ZBUFFER;
     if (depth_test != rendering_state.depth_test) {
