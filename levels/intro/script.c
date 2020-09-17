@@ -19,6 +19,8 @@
 #include "levels/intro/header.h"
 
 const LevelScript level_intro_entry_1[] = {
+/* Skips to File Select screen immediately if enabled */
+#if 1
     INIT_LEVEL(),
     FIXED_LOAD(/*loadAddr*/ _goddardSegmentStart, /*romStart*/ _goddardSegmentRomStart, /*romEnd*/ _goddardSegmentRomEnd),
     LOAD_RAW(/*seg*/ 0x13, _behaviorSegmentRomStart, _behaviorSegmentRomEnd),
@@ -38,6 +40,9 @@ const LevelScript level_intro_entry_1[] = {
     CLEAR_LEVEL(),
     SLEEP(/*frames*/ 2),
     EXIT_AND_EXECUTE(/*seg*/ 0x14, _introSegmentRomStart, _introSegmentRomEnd, level_intro_entry_2),
+#else
+    JUMP(script_intro_L1),
+#endif
 };
 
 const LevelScript level_intro_entry_2[] = {

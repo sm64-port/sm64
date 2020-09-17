@@ -121,6 +121,8 @@ s32 osEepromProbe(UNUSED OSMesgQueue *mq) {
     return 1;
 }
 
+#include "120_star_save.h"
+
 s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes) {
     u8 content[512];
     s32 ret = -1;
@@ -146,6 +148,7 @@ s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes)
         ret = 0;
     }
 #else
+#if !defined(TARGET_DC)
     FILE *fp = fopen("sm64_save_file.bin", "rb");
     if (fp == NULL) {
         return -1;
@@ -155,6 +158,11 @@ s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes)
         ret = 0;
     }
     fclose(fp);
+#else 
+    /* Bake in 120 star save */
+    memcpy(buffer, eeprom + address * 8, nbytes);
+    ret = 0;
+#endif
 #endif
     return ret;
 }
@@ -176,12 +184,16 @@ s32 osEepromLongWrite(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes
     }, content);
     s32 ret = 0;
 #else
+#if !defined(TARGET_DC)
     FILE* fp = fopen("sm64_save_file.bin", "wb");
     if (fp == NULL) {
         return -1;
     }
     s32 ret = fwrite(content, 1, 512, fp) == 512 ? 0 : -1;
     fclose(fp);
+#else
+    s32 ret = 0;
+#endif
 #endif
     return ret;
 }

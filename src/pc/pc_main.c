@@ -16,9 +16,13 @@
 #include "gfx/gfx_direct3d12.h"
 #include "gfx/gfx_dxgi.h"
 #include "gfx/gfx_glx.h"
+#include "gfx/gfx_psp.h"
+#include "gfx/gfx_dc.h"
 #include "gfx/gfx_sdl.h"
 
 #include "audio/audio_api.h"
+#include "audio/audio_psp.h"
+#include "audio/audio_dc.h"
 #include "audio/audio_wasapi.h"
 #include "audio/audio_pulse.h"
 #include "audio/audio_alsa.h"
@@ -80,7 +84,8 @@ void send_display_list(struct SPTask *spTask) {
 void produce_one_frame(void) {
     gfx_start_frame();
     game_loop_one_iteration();
-    
+
+#if !defined(TARGET_DC)
     int samples_left = audio_api->buffered();
     u32 num_audio_samples = samples_left < audio_api->get_desired_buffered() ? SAMPLES_HIGH : SAMPLES_LOW;
     //printf("Audio samples: %d %u\n", samples_left, num_audio_samples);
@@ -94,7 +99,9 @@ void produce_one_frame(void) {
     }
     //printf("Audio samples before submitting: %d\n", audio_api->buffered());
     audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
-    
+#endif
+    //create_next_audio_buffer(NULL, SAMPLES_HIGH);
+
     gfx_end_frame();
 }
 
@@ -140,12 +147,14 @@ static void on_fullscreen_changed(bool is_now_fullscreen) {
 }
 
 void main_func(void) {
-    static u64 pool[0x165000/8 / 4 * sizeof(void *)];
+    static u32 pool[0x165000/8 / 4 * sizeof(void *) * 4];
     main_pool_init(pool, pool + sizeof(pool) / sizeof(pool[0]));
     gEffectsMemoryPool = mem_pool_init(0x4000, MEMORY_POOL_LEFT);
 
+#if !defined(TARGET_DC)
     configfile_load(CONFIG_FILE);
     atexit(save_config);
+#endif
 
 #ifdef TARGET_WEB
     emscripten_set_main_loop(em_main_loop, 0, 0);
@@ -162,6 +171,10 @@ void main_func(void) {
     rendering_api = &gfx_opengl_api;
     #if defined(__linux__) || defined(__BSD__)
         wm_api = &gfx_glx;
+    #elif defined(TARGET_PSP)
+        wm_api = &gfx_psp;
+    #elif defined(TARGET_DC)
+        wm_api = &gfx_dc;
     #else
         wm_api = &gfx_sdl;
     #endif
@@ -175,6 +188,16 @@ void main_func(void) {
 #if HAVE_WASAPI
     if (audio_api == NULL && audio_wasapi.init()) {
         audio_api = &audio_wasapi;
+    }
+#endif
+#if defined(TARGET_PSP)
+    if (audio_api == NULL && audio_psp.init()) {
+        audio_api = &audio_psp;
+    }
+#endif
+#if defined(TARGET_DC)
+    if (audio_api == NULL && audio_dc.init()) {
+        audio_api = &audio_dc;
     }
 #endif
 #if HAVE_PULSE_AUDIO

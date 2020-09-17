@@ -1,4 +1,4 @@
-#if !defined(__MINGW32__) && !defined(__BSD__) && !defined(TARGET_WEB)
+#if !defined(TARGET_DC) && !defined(TARGET_PSP) && !defined(__MINGW32__) && !defined(__BSD__) && !defined(TARGET_WEB)
 // See LICENSE for license
 
 #define _XOPEN_SOURCE 600

@@ -10,7 +10,7 @@
 #include "segment2.h"
 #include "sm64.h"
 
-#ifndef TARGET_N64
+#if !defined(TARGET_N64) && !defined(TARGET_DC)
 #define BETTER_SKYBOX_POSITION_PRECISION
 #endif
 
@@ -288,7 +288,11 @@ void *create_skybox_ortho_matrix(s8 player) {
 #endif
 
     if (mtx != NULL) {
+#if defined(TARGET_DC)
+        guOrtho(mtx, left, right, bottom, top, 0.0f, 1.0f, 1.0f);
+#else
         guOrtho(mtx, left, right, bottom, top, 0.0f, 3.0f, 1.0f);
+#endif
     } else {
     }
 

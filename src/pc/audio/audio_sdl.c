@@ -1,4 +1,4 @@
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(TARGET_PSP) && !defined(TARGET_DC)
 
 #ifdef __MINGW32__
 #include "SDL.h"
