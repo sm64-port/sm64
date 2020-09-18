@@ -570,9 +570,9 @@ static void gfx_opengl_init(void) {
     config.autosort_enabled = GL_TRUE;
     config.fsaa_enabled = GL_FALSE;
     /*@Note: These should be adjusted at some point */
-    config.initial_op_capacity = 4096+2048;
-    config.initial_pt_capacity = 1024+512;
-    config.initial_tr_capacity = 1024+512;
+    config.initial_op_capacity = 4096;
+    config.initial_pt_capacity = 1024;
+    config.initial_tr_capacity = 2048;
     config.initial_immediate_capacity = 0;
     glKosInitEx(&config);
     
