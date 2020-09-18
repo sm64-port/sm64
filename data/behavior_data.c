@@ -3140,14 +3140,6 @@ const BehaviorScript bhvUnusedFakeStar[] = {
     END_LOOP(),
 };
 
-// What is this?
-static const BehaviorScript unused_1[] = {
-    BREAK(),
-    BREAK(),
-    BREAK(),
-    BREAK(),
-};
-
 const BehaviorScript bhvStaticObject[] = {
     BEGIN(OBJ_LIST_DEFAULT),
     OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),

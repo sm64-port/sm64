@@ -23,7 +23,6 @@
 // bss
 static char sMenuStrBuf[0x100];
 static struct GdVec3f sStaticVec;
-static struct GdVec3f unusedVec;
 static struct ObjGadget *sCurGadgetPtr;
 
 // forward declarations
@@ -73,25 +72,6 @@ void cat_grp_name_to_buf(struct ObjGroup *group) {
         sprintf(buf, "| %s %%x%d", group->name, (u32) (uintptr_t) group);
         gd_strcat(sMenuStrBuf, buf); // gd_strcat?
     }
-}
-
-/* 23A0D0 -> 23A190 */
-void *Unknown8018B900(struct ObjGroup *grp) {
-    void *mainMenu;
-    void *defaultSettingMenu;
-    void *controlerMenu;
-
-    gd_strcpy(sMenuStrBuf, "Default Settings %t %F"); // gd_strcpy?
-    apply_to_obj_types_in_group(OBJ_TYPE_GROUPS, (applyproc_t) cat_grp_name_to_buf, grp);
-    defaultSettingMenu = func_801A43F0(sMenuStrBuf, &Proc8018B83C);
-    controlerMenu = func_801A43F0(
-        "Control Type %t %F| U-64 Analogue Joystick %x1 | Keyboard %x2 | Mouse %x3", &func_801A4410);
-    mainMenu =
-        func_801A43F0("Dynamics %t |\t\t\tReset Positions %f |\t\t\tSet Defaults %m |\t\t\tSet "
-                      "Controller %m |\t\t\tRe-Calibrate Controller %f |\t\t\tQuit %f",
-                      &func_8017E2B8, defaultSettingMenu, controlerMenu, &func_801A4424, &gd_exit);
-
-    return mainMenu;
 }
 
 /* 23A190 -> 23A250 */

@@ -470,7 +470,7 @@ void append_bubble_vertex_buffer(Gfx *gfx, s32 index, Vec3s vertex1, Vec3s verte
  * the global sGfxCursor instead.
  */
 void envfx_set_bubble_texture(s32 mode, s16 index) {
-    void **imageArr;
+    void **imageArr = NULL;
     s16 frame = (gEnvFxBuffer + index)->animFrame;
 
     switch (mode) {

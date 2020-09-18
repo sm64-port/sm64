@@ -864,7 +864,7 @@ void bhv_boo_in_castle_loop(void) {
 }
 
 void bhv_boo_boss_spawned_bridge_loop(void) {
-    f32 targetY;
+    f32 targetY = 0.f;
 
     switch (o->oBehParams2ndByte) {
         case 1:

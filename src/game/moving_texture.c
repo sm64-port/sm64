@@ -952,7 +952,7 @@ Gfx *geo_movtex_draw_colored_2_no_update(s32 callContext, struct GraphNode *node
  * Note that the final TTC only has one big treadmill though.
  */
 Gfx *geo_movtex_update_horizontal(s32 callContext, struct GraphNode *node, UNUSED Mat4 mtx) {
-    void *movtexVerts;
+    void *movtexVerts = NULL;
 
     if (callContext == GEO_CONTEXT_RENDER) {
         struct GraphNodeGenerated *asGenerated = (struct GraphNodeGenerated *) node;

@@ -543,7 +543,7 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := -DTARGET_DC -DNDEBUG -ffunction-sections -fdata-sections -Isrc/pc/gfx/gldc
+  PLATFORM_CFLAGS  := -DTARGET_DC -DNDEBUG -ffunction-sections -fdata-sections -Isrc/pc/gfx/gldc -Wall -Wextra 
   PLATFORM_LDFLAGS := -Wl,-gc-sections
 endif
 ifeq ($(TARGET_WEB),1)
@@ -895,6 +895,7 @@ $(BUILD_DIR)/%.o: %.cpp
 
 $(BUILD_DIR)/%.o: %.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<
+	@echo $@
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 

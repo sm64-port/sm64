@@ -135,15 +135,14 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
     struct Drum *drum;
     UNUSED s32 pad[1];
     u8 sameSound; // sp3F
-    UNUSED u8 allocNewNote; // sp3D, t0
     u8 cmd; // a0 sp3E, EU s2
     UNUSED u8 loBits;
-    u16 sp3A; // t2, a0, a1
+    u16 sp3A = 0; // t2, a0, a1
     UNUSED s32 pad2[1];
-    s32 vel; // sp30, t3
+    s32 vel = 0.f; // sp30, t3
     UNUSED s32 pad3[1];
-    f32 freqScale; // sp28, f0
-    f32 sp24;
+    f32 freqScale = 0.f; // sp28, f0
+    f32 sp24 = 0.f;
     u8 temp8;
     UNUSED u8 semitone; // v0
     s32 usedSemitone; // a1

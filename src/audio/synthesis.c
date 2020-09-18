@@ -605,7 +605,7 @@ u64 *synthesis_process_notes(s16 *aiBuf, s32 bufLen, u64 *cmd) {
     UNUSED u32 pad9;
 #else
     UNUSED u32 pad9;
-    s32 sp130;  //sp128, sp104
+    s32 sp130 = 0;  //sp128, sp104
 #endif
     s32 nAdpcmSamplesProcessed; // signed required for US
     s32 t0;

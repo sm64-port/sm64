@@ -111,7 +111,7 @@ static char *read_file_line(FILE *file) {
 
 // Returns the position of the first non-whitespace character
 static char *skip_whitespace(char *str) {
-    while (isspace(*str))
+    while (isspace((int)*str))
         str++;
     return str;
 }
@@ -119,10 +119,10 @@ static char *skip_whitespace(char *str) {
 // NULL-terminates the current whitespace-delimited word, and returns a pointer to the next word
 static char *word_split(char *str) {
     // Precondition: str must not point to whitespace
-    assert(!isspace(*str));
+    assert(!isspace((int)*str));
 
     // Find either the next whitespace char or end of string
-    while (!isspace(*str) && *str != '\0')
+    while (!isspace((int)*str) && *str != '\0')
         str++;
     if (*str == '\0') // End of string
         return str;
@@ -170,7 +170,7 @@ void configfile_load(const char *filename) {
         char *tokens[2];
         int numTokens;
 
-        while (isspace(*p))
+        while (isspace((int)*p))
             p++;
         numTokens = tokenize_string(p, 2, tokens);
         if (numTokens != 0) {

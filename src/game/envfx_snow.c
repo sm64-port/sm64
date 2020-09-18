@@ -263,22 +263,6 @@ void envfx_update_snow_blizzard(s32 snowCylinderX, s32 snowCylinderY, s32 snowCy
     gSnowCylinderLastPos[2] = snowCylinderZ;
 }
 
-/*! Unused function. Checks whether a position is laterally within 3000 units
- *  to the point (x: 3380, z: -520). Considering there is an unused blizzard
- *  snow mode, this could have been used to check whether Mario is in a
- *  'blizzard area'. In Cool Cool Mountain and Snowman's Land the area lies
- *  near the starting point and doesn't seem meaningful. Notably, the point is
- *  close to the entrance of SL, so maybe there were plans for an extra hint to
- *  find it. The radius of 3000 units is quite large for that though, covering
- *  more than half of the mirror room.
- */
-static s32 is_in_mystery_snow_area(s32 x, UNUSED s32 y, s32 z) {
-    if (sqr(x - 3380) + sqr(z + 520) < sqr(3000)) {
-        return 1;
-    }
-    return 0;
-}
-
 /**
  * Update the position of underwater snow particles. Since they are stationary,
  * they merely jump back into view when they are out of view.
