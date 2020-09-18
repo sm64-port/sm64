@@ -385,7 +385,7 @@ out2:
 
 #ifndef VERSION_EU
 // This function gets optimized out on US due to being static and never called
-static
+static UNUSED
 #endif
 
 void patch_sound(UNUSED struct AudioBankSound *sound, UNUSED u8 *memBase, UNUSED u8 *offsetBase) {
@@ -738,8 +738,8 @@ u8 get_missing_bank(u32 seqId, s32 *nonNullCount, s32 *nullCount) {
 }
 
 struct AudioBank *load_banks_immediate(s32 seqId, u8 *arg1) {
-    void *ret;
-    u32 bankId;
+    void *ret = NULL;
+    u32 bankId = 0;
     u16 offset;
     u8 i;
 
@@ -1010,6 +1010,10 @@ void audio_init() {
     // Load bank sets for each sequence (assets/bank_sets.s)
     gAlBankSets = soundAlloc(&gAudioInitPool, 0x100);
     audio_dma_copy_immediate((uintptr_t) gBankSetsData, gAlBankSets, 0x100);
+#else
+    (void)data;
+    (void)size;
+    (void)buf;
 #endif
 
     init_sequence_players();

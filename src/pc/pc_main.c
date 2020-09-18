@@ -268,6 +268,8 @@ void main_func(void) {
 #if !defined(TARGET_DC)
     configfile_load(CONFIG_FILE);
     atexit(save_config);
+#else
+    (void)save_config;
 #endif
 
 #ifdef TARGET_WEB

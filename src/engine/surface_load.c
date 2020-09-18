@@ -291,9 +291,6 @@ static void add_surface(struct Surface *surface, s32 dynamic) {
     }
 }
 
-static void stub_surface_load_1(void) {
-}
-
 /**
  * Initializes a Surface struct using the given vertex data
  * @param vertexData The raw data containing vertex positions
@@ -588,13 +585,11 @@ u32 get_area_terrain_size(s16 *data) {
  * boxes (water, gas, JRB fog).
  */
 void load_area_terrain(s16 index, s16 *data, s8 *surfaceRooms, s16 *macroObjects) {
-    s16 terrainLoadType;
-    s16 *vertexData;
-    UNUSED s32 unused;
+    s16 terrainLoadType = 0;
+    s16 *vertexData = NULL;
 
     // Initialize the data for this.
     gEnvironmentRegions = NULL;
-    unused8038BE90 = 0;
     gSurfaceNodesAllocated = 0;
     gSurfacesAllocated = 0;
 
@@ -651,9 +646,6 @@ void clear_dynamic_surfaces(void) {
 
         clear_spatial_partition(&gDynamicSurfacePartition[0][0]);
     }
-}
-
-static void unused_80383604(void) {
 }
 
 /**

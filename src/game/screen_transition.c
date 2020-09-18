@@ -30,7 +30,7 @@ s32 set_and_reset_transition_fade_timer(s8 fadeTimer, u8 transTime) {
 }
 
 u8 set_transition_color_fade_alpha(s8 fadeType, s8 fadeTimer, u8 transTime) {
-    u8 time;
+    u8 time = 0;
 
     switch (fadeType) {
         case 0:
@@ -237,6 +237,9 @@ int render_screen_transition(s8 fadeTimer, s8 transType, u8 transTime, struct Wa
             break;
         case WARP_TRANSITION_FADE_INTO_BOWSER:
             return render_textured_transition(fadeTimer, transTime, transData, TEX_TRANS_BOWSER, TRANS_TYPE_CLAMP);
+            break;
+        default:
+            return 0;
             break;
     }
 }

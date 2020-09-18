@@ -253,6 +253,9 @@ f32 painting_ripple_y(struct Painting *painting, s8 ySource) {
         case MIDDLE_Y:
             return painting->size / 2.0; // some concentric ripples don't care about Mario
             break;
+        default:
+            return 0.f;
+            break;
     }
 }
 
@@ -279,6 +282,7 @@ f32 painting_nearest_4th(struct Painting *painting) {
     } else if (painting->floorEntered & ENTER_RIGHT) {
         return thirdQuarter;
     }
+    return 0.f;
 }
 
 /**
@@ -309,13 +313,16 @@ f32 painting_ripple_x(struct Painting *painting, s8 xSource) {
         case MIDDLE_X: // concentric rippling may not care about Mario
             return painting->size / 2.0;
             break;
+        default:
+            return 0.f;
+            break;
     }
 }
 
 /**
  * Set the painting's state, causing it to start a passive ripple or a ripple from Mario entering.
  *
- * @param state The state to enter
+* @param state The state to enter
  * @param painting,paintingGroup identifies the painting that is changing state
  * @param xSource,ySource what to use for the x and y origin of the ripple
  * @param resetTimer if 100, set the timer to 0
@@ -1010,7 +1017,7 @@ Gfx *display_painting_rippling(struct Painting *painting) {
     s16 *neighborTris = segmented_to_virtual(seg2_painting_mesh_neighbor_tris);
     s16 numVtx = mesh[0];
     s16 numTris = mesh[numVtx * 3 + 1];
-    Gfx *dlist;
+    Gfx *dlist = NULL;
 
     // Generate the mesh and its lighting data
     painting_generate_mesh(painting, mesh, numVtx);

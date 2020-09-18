@@ -120,7 +120,7 @@ void bhv_mips_act_follow_path(void) {
 
     // Set start waypoint and follow the path from there.
     o->oPathedStartWaypoint = waypoint;
-    followStatus = cur_obj_follow_path(followStatus);
+    followStatus = cur_obj_follow_path();
 
     // Update velocity and angle and do movement.
 #ifndef VERSION_JP

@@ -160,29 +160,6 @@ void clear_object_lists(struct ObjectNode *objLists) {
 }
 
 /**
- * This function looks broken, but it appears to attempt to delete the leaf
- * graph nodes under obj and obj's siblings.
- */
-static void unused_delete_leaf_nodes(struct Object *obj) {
-    struct Object *children;
-    struct Object *sibling;
-    struct Object *obj0 = obj;
-
-    if ((children = (struct Object *) obj->header.gfx.node.children) != NULL) {
-        unused_delete_leaf_nodes(children);
-    } else {
-        // No children
-        mark_obj_for_deletion(obj);
-    }
-
-    // Probably meant to be !=
-    while ((sibling = (struct Object *) obj->header.gfx.node.next) == obj0) {
-        unused_delete_leaf_nodes(sibling);
-        obj = (struct Object *) sibling->header.gfx.node.next;
-    }
-}
-
-/**
  * Free the given object.
  */
 void unload_object(struct Object *obj) {

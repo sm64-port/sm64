@@ -34,11 +34,10 @@ void bhv_manta_ray_init(void) {
 
 void manta_ray_move(void) {
     s16 sp1E;
-    s32 sp18;
 
     sp1E = o->header.gfx.unk38.animFrame;
     gCurrentObject->oPathedStartWaypoint = (struct Waypoint *) sMantaRayTraj;
-    sp18 = cur_obj_follow_path(sp18);
+    cur_obj_follow_path();
     o->oMantaUnkF8 = o->oPathedTargetYaw;
     o->oMantaUnkF4 = o->oPathedTargetPitch;
     o->oForwardVel = 10.0f;

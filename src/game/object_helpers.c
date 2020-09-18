@@ -395,8 +395,7 @@ s16 obj_angle_to_object(struct Object *obj1, struct Object *obj2) {
 
 s16 obj_turn_toward_object(struct Object *obj, struct Object *target, s16 angleIndex, s16 turnAmount) {
     f32 a, b, c, d;
-    UNUSED s32 unused;
-    s16 targetAngle, startAngle;
+    s16 targetAngle = 0, startAngle;
 
     switch (angleIndex) {
         case O_MOVE_ANGLE_PITCH_INDEX:
@@ -1387,9 +1386,6 @@ void cur_obj_move_y(f32 gravity, f32 bounciness, f32 buoyancy) {
     }
 }
 
-static void stub_obj_helpers_1(void) {
-}
-
 static s32 clear_move_flag(u32 *bitSet, s32 flag) {
     if (*bitSet & flag) {
         *bitSet &= flag ^ 0xFFFFFFFF;
@@ -1988,7 +1984,7 @@ void cur_obj_set_face_angle_to_move_angle(void) {
     o->oFaceAngleRoll = o->oMoveAngleRoll;
 }
 
-s32 cur_obj_follow_path(UNUSED s32 unusedArg) {
+s32 cur_obj_follow_path(void) {
     struct Waypoint *startWaypoint;
     struct Waypoint *lastWaypoint;
     struct Waypoint *targetWaypoint;
@@ -2243,9 +2239,6 @@ void bhv_dust_smoke_loop(void) {
     o->oSmokeTimer++;
 }
 
-static void stub_obj_helpers_2(void) {
-}
-
 s32 cur_obj_set_direction_table(s8 *a0) {
     o->oToxBoxMovementPattern = a0;
     o->oToxBoxMovementStep = 0;
@@ -2389,9 +2382,6 @@ s32 is_item_in_array(s8 item, s8 *array) {
     }
 
     return FALSE;
-}
-
-static void stub_obj_helpers_5(void) {
 }
 
 void bhv_init_room(void) {

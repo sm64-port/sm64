@@ -661,7 +661,7 @@ void unused_set_camera_pitch_shake_env(s16 shake) {
  *      posOff and focOff are sometimes the same address, which just ignores the pos calculation
  *! Doesn't return anything, but required to match EU
  */
-f32 calc_y_to_curr_floor(f32 *posOff, f32 posMul, f32 posBound, f32 *focOff, f32 focMul, f32 focBound) {
+BAD_RETURN(f32) calc_y_to_curr_floor(f32 *posOff, f32 posMul, f32 posBound, f32 *focOff, f32 focMul, f32 focBound) {
     f32 floorHeight = sMarioGeometry.currFloorHeight;
     f32 waterHeight;
     UNUSED s32 filler;
@@ -1604,6 +1604,7 @@ s32 update_boss_fight_camera(struct Camera *c, Vec3f focus, Vec3f pos) {
         switch (gCurrLevelArea) {
             case AREA_BOB:
                 pos[1] += 125.f;
+                __attribute__ ((fallthrough));
                 //! fall through, makes the BoB boss fight camera move up twice as high as it should
             case AREA_WF:
                 pos[1] += 125.f;
@@ -1703,9 +1704,7 @@ struct ParallelTrackingPoint sBBHLibraryParTrackPath[] = {
 };
 
 s32 unused_update_mode_5_camera(UNUSED struct Camera *c, UNUSED Vec3f focus, UNUSED Vec3f pos) {
-}
-
-static void stub_camera_1(UNUSED s32 unused) {
+    return 0;
 }
 
 void mode_boss_fight_camera(struct Camera *c) {
@@ -2028,6 +2027,7 @@ void mode_behind_mario_camera(struct Camera *c) {
 }
 
 s32 nop_update_water_camera(UNUSED struct Camera *c, UNUSED Vec3f focus, UNUSED Vec3f pos) {
+    return 0;
 }
 
 /**
@@ -4847,7 +4847,7 @@ void play_sound_if_cam_switched_to_lakitu_or_mario(void) {
  * Handles input for radial, outwards radial, parallel tracking, and 8 direction mode.
  */
 s32 radial_camera_input(struct Camera *c, UNUSED f32 unused) {
-    s16 dummy;
+    s16 dummy = 0;
 
     if ((gCameraMovementFlags & CAM_MOVE_ENTERED_ROTATE_SURFACE) || !(gCameraMovementFlags & CAM_MOVE_ROTATE)) {
 
@@ -5090,7 +5090,7 @@ s32 determine_dance_cutscene(UNUSED struct Camera *c) {
  * @return `pullResult` or `pushResult` depending on Mario's door action
  */
 u8 open_door_cutscene(u8 pullResult, u8 pushResult) {
-    s16 result;
+    s16 result = 0;
 
     if (sMarioCamState->action == ACT_PULLING_DOOR) {
         result = pullResult;
@@ -5305,22 +5305,6 @@ void set_focus_rel_mario(struct Camera *c, f32 leftRight, f32 yOff, f32 forwBack
     c->focus[2] = sMarioCamState->pos[2] + forwBack * coss(yaw) - leftRight * sins(yaw);
     c->focus[0] = sMarioCamState->pos[0] + forwBack * sins(yaw) + leftRight * coss(yaw);
     c->focus[1] = sMarioCamState->pos[1] + yOff + focFloorYOff;
-}
-
-/**
- * Set the camera's position to Mario's position, and add several relative offsets. Unused.
- *
- * @param leftRight offset to Mario's left/right, relative to his faceAngle
- * @param yOff y offset
- * @param forwBack offset to Mario's front/back, relative to his faceAngle
- * @param yawOff offset to Mario's faceAngle, changes the direction of `leftRight` and `forwBack`
- */
-static void unused_set_pos_rel_mario(struct Camera *c, f32 leftRight, f32 yOff, f32 forwBack, s16 yawOff) {
-    u16 yaw = sMarioCamState->faceAngle[1] + yawOff;
-
-    c->pos[0] = sMarioCamState->pos[0] + forwBack * sins(yaw) + leftRight * coss(yaw);
-    c->pos[1] = sMarioCamState->pos[1] + yOff;
-    c->pos[2] = sMarioCamState->pos[2] + forwBack * coss(yaw) - leftRight * sins(yaw);
 }
 
 /**
@@ -7199,9 +7183,6 @@ void cutscene_unsoften_music(UNUSED struct Camera *c) {
     sequence_player_unlower(SEQ_PLAYER_LEVEL, 60);
 }
 
-static void stub_camera_5(UNUSED struct Camera *c) {
-}
-
 BAD_RETURN(s32) cutscene_unused_start(UNUSED struct Camera *c) {
 }
 
@@ -7680,12 +7661,6 @@ BAD_RETURN(s32) cutscene_dance_rotate_move_back(struct Camera *c) {
 
 BAD_RETURN(s32) cutscene_dance_rotate_move_towards_mario(struct Camera *c) {
     rotate_and_move_vec3f(c->pos, sMarioCamState->pos, 20.f, 0, 0);
-}
-
-/**
- * Speculated to be dance-related due to its proximity to the other dance functions
- */
-static BAD_RETURN(s32) cutscene_dance_unused(UNUSED struct Camera *c) {
 }
 
 /**
@@ -8596,13 +8571,6 @@ BAD_RETURN(s32) cutscene_death_stomach_goto_mario(struct Camera *c) {
 }
 
 /**
- * Ah, yes
- */
-static void unused_water_death_move_to_side_of_mario(struct Camera *c) {
-    water_death_move_to_mario_side(c);
-}
-
-/**
  * Cutscene that plays when Mario dies on his stomach.
  */
 BAD_RETURN(s32) cutscene_death_stomach(struct Camera *c) {
@@ -8872,14 +8840,6 @@ BAD_RETURN(s32) cutscene_enter_pyramid_top(struct Camera *c) {
     }
 }
 
-static void unused_cutscene_goto_cvar(struct Camera *c) {
-    f32 dist;
-
-    dist = calc_abs_dist(sCutsceneVars[3].point, sMarioCamState->pos);
-    dist = calc_abs_dist(sCutsceneVars[9].point, sMarioCamState->pos) + 200.f;
-    cutscene_goto_cvar_pos(c, dist, 0x1000, 0x300, 0);
-}
-
 /**
  * cvar8 is Mario's position and faceAngle
  *
@@ -9031,14 +8991,6 @@ BAD_RETURN(s32) cutscene_read_message_start(struct Camera *c) {
     sCUpCameraPitch = -0x830;
     sModeOffsetYaw = 0;
     sCutsceneVars[0].angle[0] = 0;
-}
-
-static void unused_cam_to_mario(struct Camera *c) {
-    Vec3s dir;
-
-    vec3s_set(dir, 0, sMarioCamState->faceAngle[1], 0);
-    offset_rotated_coords(c->pos, sMarioCamState->pos, dir, 0, 100.f, 190.f);
-    offset_rotated_coords(c->focus, sMarioCamState->pos, dir, 0, 70.f, -20.f);
 }
 
 /**

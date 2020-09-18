@@ -96,7 +96,6 @@ s32 setup_view_buffers(const char *name, struct ObjView *view, UNUSED s32 ulx, U
                        UNUSED s32 lrx, UNUSED s32 lry);
 void gd_init_controllers(void);
 void func_801A43DC(struct GdObj *obj); //apply to OBJ_TYPE_VIEWS
-void *func_801A43F0(UNUSED const char *menufmt, ...);   // TUI code..? query_user? doesn't actually return anything... maybe it returned a "menu *"?
 void func_801A4410(void *arg0);  // function looks like it got various controller/input attributes..?
 void func_801A4424(void *arg0);  // TUI stuff?
 void func_801A4438(f32 x, f32 y, f32 z);

@@ -133,7 +133,9 @@ s32 osEepromProbe(UNUSED OSMesgQueue *mq) {
 #include "120_star_save.h"
 
 s32 osEepromLongRead(UNUSED OSMesgQueue *mq, u8 address, u8 *buffer, int nbytes) {
+#if !defined(TARGET_DC)
     u8 content[512];
+#endif
     s32 ret = -1;
 
 #ifdef TARGET_WEB

@@ -40,9 +40,8 @@ void bhv_jrb_sliding_box_loop(void) {
     Vec3s sp40;
     struct Object *sp3C;
     struct Surface *sp38;
-    UNUSED Vec3f sp2C;
     Vec3f sp20;
-    s16 sp1E;
+    s16 sp1E = 0;
     if (o->oJrbSlidingBoxUnkF4 == NULL) {
         sp3C = cur_obj_nearest_object_with_behavior(bhvInSunkenShip3);
         if (sp3C != NULL) // NULL check only for assignment, not for dereference?
@@ -70,9 +69,6 @@ void bhv_jrb_sliding_box_loop(void) {
     sp20[2] = o->oPosZ;
     find_floor(sp20[0], sp20[1], sp20[2], &sp38);
     if (sp38 != NULL) {
-        sp2C[0] = sp38->normal.x;
-        sp2C[1] = sp38->normal.y;
-        sp2C[2] = sp38->normal.z;
         o->oFaceAnglePitch = sp1E;
     }
     o->oJrbSlidingBoxUnkFC = sins(o->oJrbSlidingBoxUnkF8) * 20.0f;

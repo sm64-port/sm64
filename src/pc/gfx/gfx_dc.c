@@ -34,6 +34,7 @@ unsigned int GetSystemTimeLow(void) {
     return (unsigned int) msec;
 }
 
+extern void timer_spin_sleep(unsigned int ms);
 void DelayThread(unsigned int ms) {
     timer_spin_sleep(ms);
 }

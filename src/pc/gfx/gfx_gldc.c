@@ -97,7 +97,7 @@ static int scale_buf_size = 0;
 
 static float c_mix[] = { 0.f, 0.f, 0.f, 1.f };
 static float c_invmix[] = { 1.f, 1.f, 1.f, 1.f };
-static const float c_white[] = { 1.f, 1.f, 1.f, 1.f };
+//static const float c_white[] = { 1.f, 1.f, 1.f, 1.f };
 
 // from https://github.com/z2442/sm64-port
 
@@ -425,6 +425,11 @@ static void gfx_opengl_set_viewport(int x, int y, int width, int height) {
 static void gfx_opengl_set_scissor(int x, int y, int width, int height) {
 #if 0
     glScissor(x, y, width, height);
+#else
+    (void)x;
+    (void)y;
+    (void)width;
+    (void)height;
 #endif
 }
 

@@ -996,7 +996,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
     u8 cmd;    // v1, s1
     u8 loBits; // t0, a0
     s32 offset;
-    s8 value; // sp53, 4b
+    s8 value = 0; // sp53, 4b
     u8 temp;
     s8 tempSigned;
     UNUSED u8 temp2;
@@ -1544,7 +1544,7 @@ void sequence_player_process_sequence(struct SequencePlayer *seqPlayer) {
     u8 cmd;
     u8 loBits;
     u8 temp;
-    s32 value;
+    s32 value = 0;
     s32 i;
     u16 u16v;
     u8 *tempPtr;

@@ -224,36 +224,6 @@ void create_dl_ortho_matrix_menu_hack(void) {
 #endif
 }
 
-static u8 *alloc_ia8_text_from_i1(u16 *in, s16 width, s16 height) {
-    s32 inPos;
-    u16 bitMask;
-    u8 *out;
-    s16 outPos = 0;
-
-    out = alloc_display_list((u32) width * (u32) height);
-
-    if (out == NULL) {
-        return NULL;
-    }
-
-    for (inPos = 0; inPos < (width * height) / 16; inPos++) {
-        bitMask = 0x8000;
-
-        while (bitMask != 0) {
-            if (in[inPos] & bitMask) {
-                out[outPos] = 0xFF;
-            } else {
-                out[outPos] = 0x00;
-            }
-
-            bitMask /= 2;
-            outPos++;
-        }
-    }
-
-    return out;
-}
-
 void render_generic_char(u8 c) {
     void **fontLUT;
     void *packedTexture;
@@ -1697,12 +1667,12 @@ s8 gDialogCourseActNum = 1;
 
 void render_dialog_entries(void) {
 #ifdef VERSION_EU
-    s8 lowerBound;
+    s8 lowerBound = 0;
 #endif
     void **dialogTable;
     struct DialogEntry *dialog;
 #ifdef VERSION_US
-    s8 lowerBound;
+    s8 lowerBound = 0;
 #endif
 #ifdef VERSION_EU
     gInGameLanguage = eu_get_language();

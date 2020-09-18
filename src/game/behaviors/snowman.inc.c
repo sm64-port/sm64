@@ -57,7 +57,7 @@ void snowmans_bottom_act_1(void) {
 
     o->oPathedStartWaypoint = segmented_to_virtual(&ccm_seg7_trajectory_snowman);
     sp26 = object_step_without_floor_orient();
-    sp20 = cur_obj_follow_path(sp20);
+    sp20 = cur_obj_follow_path();
     o->oSnowmansBottomUnkF8 = o->oPathedTargetYaw;
     o->oMoveAngleYaw = approach_s16_symmetric(o->oMoveAngleYaw, o->oSnowmansBottomUnkF8, 0x400);
 

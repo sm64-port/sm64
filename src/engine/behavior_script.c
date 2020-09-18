@@ -30,12 +30,6 @@
 
 static u16 gRandomSeed16;
 
-// Unused function that directly jumps to a behavior command and resets the object's stack index.
-static void goto_behavior_unused(const BehaviorScript *bhvAddr) {
-    gCurBhvCommand = segmented_to_virtual(bhvAddr);
-    gCurrentObject->bhvStackIndex = 0;
-}
-
 // Generate a pseudorandom integer from 0 to 65535 from the random seed, and update the seed.
 u16 random_u16(void) {
     u16 temp1, temp2;
@@ -105,12 +99,6 @@ static uintptr_t cur_obj_bhv_stack_pop(void) {
     bhvAddr = gCurrentObject->bhvStack[gCurrentObject->bhvStackIndex];
 
     return bhvAddr;
-}
-
-static void stub_behavior_script_1(void) {
-    for (;;) {
-        ;
-    }
 }
 
 // Command 0x22: Hides the current object.
@@ -683,49 +671,6 @@ static s32 bhv_cmd_begin(void) {
     return BHV_PROC_CONTINUE;
 }
 
-// An unused, incomplete behavior command that does not have an entry in the lookup table, and so no command number.
-// It cannot be simply re-added to the table, as unlike all other bhv commands it takes a parameter.
-// Theoretically this command would have been of variable size.
-// Included below is a modified/repaired version of this function that would work properly.
-static void bhv_cmd_set_int_random_from_table(s32 tableSize) {
-    u8 field = BHV_CMD_GET_2ND_U8(0);
-    s32 table[16];
-    s32 i;
-    // This for loop would not work as intended at all...
-    for (i = 0; i <= tableSize / 2; i += 2) {
-        table[i] = BHV_CMD_GET_1ST_S16(i + 1);
-        table[i + 1] = BHV_CMD_GET_2ND_S16(i + 1);
-    }
-
-    cur_obj_set_int(field, table[(s32)(tableSize * random_float())]);
-
-    // Does not increment gCurBhvCommand or return a bhv status
-}
-
-/**
-// Command 0x??: Sets the specified field to a random entry in the given table, up to size 16.
-// Bytes: ?? FF SS SS V1 V1 V2 V2 V3 V3 V4 V4... ...V15 V15 V16 V16 (no macro exists)
-// F -> field, S -> table size, V1, V2, etc. -> table entries (up to 16)
-static s32 bhv_cmd_set_int_random_from_table(void) {
-    u8 field = BHV_CMD_GET_2ND_U8(0);
-    // Retrieve tableSize from the bhv command instead of as a parameter.
-    s16 tableSize = BHV_CMD_GET_2ND_S16(0); // tableSize should not be greater than 16
-    s32 table[16];
-    s32 i;
-
-    // Construct the table from the behavior command.
-    for (i = 0; i <= tableSize; i += 2) {
-        table[i] = BHV_CMD_GET_1ST_S16((i / 2) + 1);
-        table[i + 1] = BHV_CMD_GET_2ND_S16((i / 2) + 1);
-    }
-
-    // Set the field to a random entry of the table.
-    cur_obj_set_int(field, table[(s32)(tableSize * random_float())]);
-
-    gCurBhvCommand += (tableSize / 2) + 1;
-    return BHV_PROC_CONTINUE;
-}
-**/
 
 // Command 0x2A: Loads collision data for the object.
 // Usage: LOAD_COLLISION_DATA(collisionData)

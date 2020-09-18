@@ -61,7 +61,7 @@ void unagi_act_1_4(s32 arg0) {
         cur_obj_play_sound_2(SOUND_GENERAL_MOVING_WATER);
     }
 
-    if (cur_obj_follow_path(0) == -1) {
+    if (cur_obj_follow_path() == -1) {
         o->oAction = arg0;
     }
 
@@ -163,6 +163,7 @@ void bhv_unagi_loop(void) {
             break;
         case 2:
             unagi_act_2();
+            break;
         case 3:
             unagi_act_3();
             break;

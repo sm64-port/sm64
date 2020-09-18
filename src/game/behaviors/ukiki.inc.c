@@ -360,7 +360,7 @@ void ukiki_act_go_to_cage(void) {
 
             o->oPathedStartWaypoint = (struct Waypoint *) sCageUkikiPath;
 
-            if (cur_obj_follow_path(0) != PATH_REACHED_END) {
+            if (cur_obj_follow_path() != PATH_REACHED_END) {
                 o->oForwardVel = 10.0f;
                 cur_obj_rotate_yaw_toward(o->oPathedTargetYaw, 0x400);
                 o->oPosY = o->oFloorHeight;
@@ -492,20 +492,6 @@ void ukiki_free_loop(void) {
 
     if(!(o->oMoveFlags & OBJ_MOVE_MASK_IN_WATER)) {
         exec_anim_sound_state(sUkikiSoundStates);
-    }
-}
-
-/**
- * Unused function for timing ukiki's blinking.
- * Image still present in Ukiki's actor graphics.
- *
- * Possibly unused so AnimState could be used for wearing a hat?
- */
-static void ukiki_blink_timer(void) {
-    if (gGlobalTimer % 50 < 7) {
-        o->oAnimState = UKIKI_ANIM_STATE_EYE_CLOSED;
-    } else {
-        o->oAnimState = UKIKI_ANIM_STATE_DEFAULT;
     }
 }
 
