@@ -81,14 +81,13 @@ static void controller_dc_read(OSContPad *pad) {
         return;
     state = (cont_state_t *) maple_dev_status(cont);
 
-    /* ANALOG */
     const char stickH =state->joyx;
     const char stickV = 0xff-((uint8_t)(state->joyy));
     const uint32_t magnitude_sq = (uint32_t)(stickH * stickH) + (uint32_t)(stickV * stickV);
 
     if (magnitude_sq > (uint32_t)(configDeadzone * configDeadzone)) {
-        pad->stick_x = stickH;
-        pad->stick_y = stickV;
+        pad->stick_x = ((float)stickH/127)*80;
+        pad->stick_y = ((float)stickV/127)*80;
     }
     if (state->buttons & CONT_START)
         pad->button |= START_BUTTON;
