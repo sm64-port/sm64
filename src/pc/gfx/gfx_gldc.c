@@ -95,7 +95,7 @@ static void *scale_buf = NULL;
 static int scale_buf_size = 0;
 #endif
 
-static float c_mix[] = { 0.f, 0.f, 0.f, 1.f };
+//static float c_mix[] = { 0.f, 0.f, 0.f, 1.f };
 static float c_invmix[] = { 1.f, 1.f, 1.f, 1.f };
 //static const float c_white[] = { 1.f, 1.f, 1.f, 1.f };
 
@@ -154,7 +154,6 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
     GLenum mode;
 
     // HACK: lord forgive me for this, but this is easier
-
     switch (prg->shader_id) {
         case 0x0000038D: // mario's eyes
         case 0x01045A00: // peach letter
@@ -163,7 +162,7 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
             break;
         case 0x00000551: // goddard
         /*@Note: Issues! */
-            mode = GL_DECAL; /*GL_BLEND*/
+            mode =  GL_REPLACE; /*GL_BLEND*/
             break;
         default:
             mode = GL_MODULATE;
@@ -197,8 +196,8 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
 
     if (prg->shader_id & SHADER_OPT_FOG) {
         // blend it on top of normal tris later
-        cur_fog_ofs = ofs;
-        ofs += 3;
+        //cur_fog_ofs = ofs;
+        //ofs += 3;
     }
 
     if (prg->num_inputs) {
@@ -207,9 +206,13 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         // HACK: if there's a texture and two colors, one of them is likely for speculars or some shit (see mario head)
         //       if there's two colors but no texture, the real color is likely the second one
         // HACKHACK: alpha is 0 in the transition shader (0x01A00045), maybe figure out the flags instead
-        const int vlen = (prg->cc.opt_alpha && prg->shader_id != 0x01A00045) ? 4 : 3;
-        const int hack = vlen * (prg->num_inputs > 1);
+        //const int vlen = (prg->cc.opt_alpha && prg->shader_id != 0x01A00045) ? 4 : 3;
+        //const int hack = vlen * (prg->num_inputs > 1);
 
+        const int vlen = 4;
+        const int hack = 0;
+
+        #if 0
         if (prg->texture_used[1] && prg->cc.do_mix[0]) {
             // HACK: when two textures are mixed by vertex color, store the color
             //       it will be used later when rendering two texture passes
@@ -221,13 +224,15 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
             c_invmix[2] = 1.f - c_mix[2];
             glDisableClientState(GL_COLOR_ARRAY);
             glColor3f(c_mix[0], c_mix[1], c_mix[2]);
-        } else {
+        } else 
+        #endif
+        {
             // otherwise use vertex colors as normal
             glEnableClientState(GL_COLOR_ARRAY);
             glColorPointer(vlen, GL_FLOAT, cur_buf_stride, ofs + hack);
         }
 
-        ofs += prg->num_inputs * vlen;
+        ofs += 4;//prg->num_inputs * vlen;
     } else {
         glDisableClientState(GL_COLOR_ARRAY);
     }
@@ -239,7 +244,7 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         if (prg->shader_id & SHADER_OPT_TEXTURE_EDGE) {
             // (horrible) alpha discard
             glEnable(GL_ALPHA_TEST);
-            glAlphaFunc(GL_GREATER, 0.666f);
+            glAlphaFunc(GL_GREATER, 1.0f/3.0f);
         } else {
             glDisable(GL_ALPHA_TEST);
         }
@@ -370,7 +375,7 @@ static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int 
 }
 
 static inline GLenum gfx_cm_to_opengl(uint32_t val) {
-    if (val & G_TX_CLAMP) return GL_CLAMP_TO_EDGE;
+    if (val & G_TX_CLAMP) return GL_CLAMP;
    // return (val & G_TX_MIRROR) ? GL_MIRRORED_REPEAT : GL_REPEAT;
     return  GL_REPEAT;
 }
@@ -434,6 +439,10 @@ static void gfx_opengl_set_scissor(int x, int y, int width, int height) {
 }
 
 static void gfx_opengl_set_use_alpha(bool use_alpha) {
+    /* Level render hack to ignore fog */
+    if (cur_shader->shader_id == 52429312) {
+        return;
+    }
     gl_blend = use_alpha;
     if (use_alpha)
         glEnable(GL_BLEND);
@@ -501,6 +510,12 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
     // if there's two textures, set primary texture first
     if (cur_shader->texture_used[1])
         glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
+
+    /*@Error: Goddard hack */
+    if(cur_shader->shader_id == 0x551){
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_BLEND);
+    }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * cur_buf_num_tris);
 

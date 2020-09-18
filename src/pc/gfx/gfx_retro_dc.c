@@ -46,9 +46,19 @@
 #define RATIO_X (gfx_current_dimensions.width / (2.0f * HALF_SCREEN_WIDTH))
 #define RATIO_Y (gfx_current_dimensions.height / (2.0f * HALF_SCREEN_HEIGHT))
 
-#define MAX_BUFFERED 256
+#define MAX_BUFFERED (1024)
 #define MAX_LIGHTS 2
 #define MAX_VERTICES 64
+
+struct ShaderProgram {
+    bool enabled;
+    uint32_t shader_id;
+    struct CCFeatures cc;
+    int mix;
+    bool texture_used[2];
+    int texture_ord[2];
+    int num_inputs;
+};
 
 struct RGBA {
     uint8_t r, g, b, a;
@@ -912,7 +922,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                         if (distance_frac < 0.0f) distance_frac = 0.0f;
                         if (distance_frac > 1.0f) distance_frac = 1.0f;
                         tmp.r = tmp.g = tmp.b = tmp.a = distance_frac * 255.0f;
-                        color = &tmp;
+                        //color = &tmp;
                         break;
                     }
                     default:
@@ -938,12 +948,21 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                 #endif
             }
         }
-        //struct RGBA *color = &v_arr[i]->color;
-        buf_vbo[buf_vbo_len++] = color->r / 255.0f;
-        buf_vbo[buf_vbo_len++] = color->g / 255.0f;
-        buf_vbo[buf_vbo_len++] = color->b / 255.0f;
-        //buf_vbo[buf_vbo_len++] = color->a / 255.0f;
-        buf_vbo[buf_vbo_len++] = color->a / 255.0f;
+        /*@Error: Transition Hack */
+        if(__builtin_expect((prg->shader_id == 0x01A00045), 0)){
+            buf_vbo[buf_vbo_len++] = 0.f;
+            buf_vbo[buf_vbo_len++] = 0.f;
+            buf_vbo[buf_vbo_len++] = 0.f;
+            buf_vbo[buf_vbo_len++] = 1.f;
+        } else {
+            //struct RGBA *color = &v_arr[i]->color;
+            buf_vbo[buf_vbo_len++] = color->r / 255.0f;
+            buf_vbo[buf_vbo_len++] = color->g / 255.0f;
+            buf_vbo[buf_vbo_len++] = color->b / 255.0f;
+            //buf_vbo[buf_vbo_len++] = color->a / 255.0f;
+            buf_vbo[buf_vbo_len++] = 1.f;
+        }
+
     }
     if (++buf_vbo_num_tris == MAX_BUFFERED) {
         gfx_flush();
