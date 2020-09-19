@@ -364,7 +364,7 @@ void func_8018F520(struct ObjBone *b) {
     gd_normalize_vec3f(&sp84);
     sp64 = gd_vec3f_magnitude(&sp78);
     gd_create_rot_mat_angular(&mtx, &sp84, sp64);
-    gd_mult_mat4f(&b->mat70, &mtx, &b->mat70);
+    gd_mult_mat4f((const Mat4f *)&b->mat70, (const Mat4f *)&mtx, &b->mat70);
     D_801BA968.x = b->mat70[2][0];
     D_801BA968.y = b->mat70[2][1];
     D_801BA968.z = b->mat70[2][2];
@@ -392,8 +392,8 @@ void func_8018F89C(struct ObjBone *b) {
     b->unk14.y = (spAC->unk14.y + spA8->unk14.y) / 2.0; //? 2.0f;
     b->unk14.z = (spAC->unk14.z + spA8->unk14.z) / 2.0; //? 2.0f;
 
-    gd_mult_mat4f(&b->matB0, &gGdSkinNet->mat128, &mtx);
-    gd_copy_mat4f(&mtx, &b->mat70);
+    gd_mult_mat4f((const Mat4f *)&b->matB0, (const Mat4f *)&gGdSkinNet->mat128, &mtx);
+    gd_copy_mat4f((const Mat4f *)&mtx, &b->mat70);
 
     D_801BA968.x = -b->mat70[2][0];
     D_801BA968.y = -b->mat70[2][1];
@@ -833,7 +833,7 @@ void func_80190B54(struct ObjJoint *a0, struct ObjJoint *a1, struct GdVec3f *a2)
         sp78 = gd_vec3f_magnitude(&sp80);
         gd_normalize_vec3f(&sp80);
         gd_create_rot_mat_angular(&sp38, &sp80, sp78);
-        gd_mult_mat4f(&a0->matE8, &sp38, &a0->matE8);
+        gd_mult_mat4f((const Mat4f *)&a0->matE8, (const Mat4f *)&sp38, &a0->matE8);
 
     } else {
         D_801BAAE0.x = a2->x;
@@ -919,7 +919,7 @@ void func_801911A8(struct ObjJoint *j) {
     j->unkCC.y = j->unkC0.y;
     j->unkCC.z = j->unkC0.z;
 
-    gd_rotate_and_translate_vec3f(&j->unkCC, &gGdSkinNet->mat128);
+    gd_rotate_and_translate_vec3f(&j->unkCC, (const Mat4f *)&gGdSkinNet->mat128);
 }
 
 /* 23F9F0 -> 23FB90 */
@@ -928,7 +928,7 @@ void func_80191220(struct ObjJoint *j) {
     j->unk48.y = j->unk54.y;
     j->unk48.z = j->unk54.z;
 
-    gd_mat4f_mult_vec3f(&j->unk48, &gGdSkinNet->mat128);
+    gd_mat4f_mult_vec3f(&j->unk48, (const Mat4f *)&gGdSkinNet->mat128);
     j->unk3C.x = j->unk48.x;
     j->unk3C.y = j->unk48.y;
     j->unk3C.z = j->unk48.z;
@@ -963,7 +963,7 @@ void func_801913F0(struct ObjJoint *j) {
     j->unk30.y = j->unk14.y;
     j->unk30.z = j->unk14.z;
 
-    gd_copy_mat4f(&gGdSkinNet->mat128, &j->matE8);
+    gd_copy_mat4f((const Mat4f *)&gGdSkinNet->mat128, &j->matE8);
 }
 
 /* 23FCC8 -> 23FCDC */
@@ -981,7 +981,7 @@ void func_8019150C(Mat4f *a0, struct GdVec3f *a1) {
     a1->x += sp1C.x;
     a1->y += sp1C.y;
     a1->z += sp1C.z;
-    gd_mat4f_mult_vec3f(a1, a0);
+    gd_mat4f_mult_vec3f(a1, (const Mat4f *)a0);
 }
 
 /* 23FDD4 -> 23FFF4 */
@@ -1007,7 +1007,7 @@ void func_80191604(struct ObjJoint *j) {
     gd_scale_mat4f_by_vec3f(&j->mat168, (struct GdVec3f *) &j->unk9C);
     gd_rot_mat_about_vec(&j->mat168, (struct GdVec3f *) &j->unk6C);
     gd_add_vec3f_to_mat4f_offset(&j->mat168, &j->unk200);
-    gd_copy_mat4f(&j->mat168, &j->matE8);
+    gd_copy_mat4f((const Mat4f *)&j->mat168, &j->matE8);
 
     gd_set_identity_mat4(&j->mat128);
     gd_add_vec3f_to_mat4f_offset(&j->mat128, &j->unk54);

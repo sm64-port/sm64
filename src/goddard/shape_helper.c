@@ -541,7 +541,7 @@ void Unknown801985E8(struct ObjShape *shape) {
     D_801BAD30.y = (f32)((sp18.p0.y + sp18.p1.y) / 2.0); //? 2.0f
     D_801BAD30.z = (f32)((sp18.p0.z + sp18.p1.z) / 2.0); //? 2.0f
 
-    gd_print_vec("c=", &D_801BAD30);
+    gd_print_vec("c=", (const struct GdVec3f *)&D_801BAD30);
 
     apply_to_obj_types_in_group(OBJ_TYPE_VERTICES, (applyproc_t) Unknown80198524, shape->vtxGroup);
 }

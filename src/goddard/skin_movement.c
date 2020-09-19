@@ -94,7 +94,7 @@ void func_80181894(struct ObjJoint *joint) {
                 stackVec.x = curWeight->vec20.x;
                 stackVec.y = curWeight->vec20.y;
                 stackVec.z = curWeight->vec20.z;
-                gd_rotate_and_translate_vec3f(&stackVec, &joint->matE8);
+                gd_rotate_and_translate_vec3f(&stackVec, (const Mat4f *)&joint->matE8);
 
                 connectedVtx = curWeight->unk3C;
                 scaleFactor = curWeight->unk38;
@@ -118,7 +118,7 @@ void func_801819D0(struct ObjVertex *vtx) {
         localVec.y = vtx->pos.y;
         localVec.z = vtx->pos.z;
 
-        gd_rotate_and_translate_vec3f(&localVec, &D_801B9EA8);
+        gd_rotate_and_translate_vec3f(&localVec, (const Mat4f *)&D_801B9EA8);
         sSkinNetCurWeight->vec20.x = localVec.x;
         sSkinNetCurWeight->vec20.y = localVec.y;
         sSkinNetCurWeight->vec20.z = localVec.z;

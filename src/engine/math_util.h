@@ -32,20 +32,20 @@ extern f32 gCosineTable[];
 
 #define sqr(x) ((x) * (x))
 
-void *vec3f_copy(Vec3f dest, Vec3f src);
-void *vec3f_set(Vec3f dest, f32 x, f32 y, f32 z);
-void *vec3f_add(Vec3f dest, Vec3f a);
-void *vec3f_sum(Vec3f dest, Vec3f a, Vec3f b);
-void *vec3s_copy(Vec3s dest, Vec3s src);
-void *vec3s_set(Vec3s dest, s16 x, s16 y, s16 z);
-void *vec3s_add(Vec3s dest, Vec3s a);
-void *vec3s_sum(Vec3s dest, Vec3s a, Vec3s b);
-void *vec3s_sub(Vec3s dest, Vec3s a);
-void *vec3s_to_vec3f(Vec3f dest, Vec3s a);
-void *vec3f_to_vec3s(Vec3s dest, Vec3f a);
-void *find_vector_perpendicular_to_plane(Vec3f dest, Vec3f a, Vec3f b, Vec3f c);
-void *vec3f_cross(Vec3f dest, Vec3f a, Vec3f b);
-void *vec3f_normalize(Vec3f dest);
+void vec3f_copy(Vec3f dest, Vec3f src);
+void vec3f_set(Vec3f dest, f32 x, f32 y, f32 z);
+void vec3f_add(Vec3f dest, Vec3f a);
+void vec3f_sum(Vec3f dest, Vec3f a, Vec3f b);
+void vec3s_copy(Vec3s dest, Vec3s src);
+void vec3s_set(Vec3s dest, s16 x, s16 y, s16 z);
+void vec3s_add(Vec3s dest, Vec3s a);
+void vec3s_sum(Vec3s dest, Vec3s a, Vec3s b);
+void vec3s_sub(Vec3s dest, Vec3s a);
+void vec3s_to_vec3f(Vec3f dest, Vec3s a);
+void vec3f_to_vec3s(Vec3s dest, Vec3f a);
+void find_vector_perpendicular_to_plane(Vec3f dest, Vec3f a, Vec3f b, Vec3f c);
+void vec3f_cross(Vec3f dest, Vec3f a, Vec3f b);
+void vec3f_normalize(Vec3f dest);
 void mtxf_copy(Mat4 dest, Mat4 src);
 void mtxf_identity(Mat4 mtx);
 void mtxf_translate(Mat4 dest, Vec3f b);

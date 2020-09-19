@@ -543,8 +543,8 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := -DTARGET_DC -D_arch_dreamcast -DNDEBUG -ffunction-sections -fdata-sections -Isrc/pc/gfx/gldc -Wall -Wextra
-  PLATFORM_LDFLAGS := -Wl,-gc-sections
+  PLATFORM_CFLAGS  := -DTARGET_DC -D_arch_dreamcast -DNDEBUG -ffunction-sections -fdata-sections -Isrc/pc/gfx/gldc -Wall -Wextra -std=c99
+  PLATFORM_LDFLAGS := -Wl,--gc-sections
 endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
