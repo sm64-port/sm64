@@ -459,14 +459,7 @@ static void gfx_opengl_set_viewport(int x, int y, int width, int height) {
 }
 
 static void gfx_opengl_set_scissor(int x, int y, int width, int height) {
-#if 0
     glScissor(x, y, width, height);
-#else
-    (void)x;
-    (void)y;
-    (void)width;
-    (void)height;
-#endif
 }
 
 static void gfx_opengl_set_use_alpha(bool use_alpha) {
@@ -553,6 +546,33 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
     //if (cur_fog_ofs) gfx_opengl_pass_fog();
 }
 
+extern void gfx_opengl_2d_projection(void);
+extern void gfx_opengl_reset_projection(void);
+void gfx_opengl_draw_triangles_2d(float buf_vbo[], UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris) {
+    gfx_opengl_2d_projection();
+
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_COLOR_ARRAY);
+    if(buf_vbo_num_tris) {
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 9 * sizeof(float), buf_vbo);
+        glTexCoordPointer(2, GL_FLOAT, 9 * sizeof(float), buf_vbo + 3);
+        glColorPointer(4, GL_FLOAT, 9 * sizeof(float), buf_vbo + 5);
+
+        // if there's two textures, set primary texture first
+        if (cur_shader->texture_used[1])
+            glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
+    } else {
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glVertexPointer(3, GL_FLOAT, 7 * sizeof(float), buf_vbo);
+        glColorPointer(4, GL_FLOAT, 7 * sizeof(float), buf_vbo + 3);
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, 3 * 2 /* 2 tri quad */);
+    gfx_opengl_reset_projection();
+}
+
 static inline bool gl_check_ext(const char *name) {
     static const char *extstr = NULL;
 
@@ -585,6 +605,7 @@ static inline bool gl_get_version(int *major, int *minor, bool *is_es) {
 
 #define sys_fatal printf
 
+extern void getRamStatus(void);
 static void gfx_opengl_init(void) {
 #if FOR_WINDOWS || defined(OSX_BUILD)
     GLenum err;
@@ -602,8 +623,10 @@ static void gfx_opengl_init(void) {
     config.initial_tr_capacity = 2048;
     config.initial_immediate_capacity = 0;
     glKosInitEx(&config);
-    
     //glKosInit();
+
+    getRamStatus();
+    fflush(stdout);
 
     // check GL version
     int vmajor, vminor;

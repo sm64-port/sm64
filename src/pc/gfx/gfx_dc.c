@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <dc/video.h>
 #include <assert.h>
 
 #define GFX_API_NAME "Dreamcast GLdc"
@@ -28,6 +29,10 @@ void DelayThread(unsigned int ms) {
 }
 
 //-----------------------------------------------------------------------------
+#if 0
+typedef void (*assert_handler_t)(const char * file, int line, const char * expr,
+                                 const char * msg, const char * func);
+assert_handler_t assert_set_handler(assert_handler_t hnd);
 extern void bfont_draw_str(uint16_t *buffer, int bufwidth, int opaque, char *str);
 static void drawtext(int x, int y, char *string) {
     extern uint16_t *vram_s;
@@ -56,17 +61,13 @@ static void assert_hnd(const char *file, int line, const char *expr, const char 
     drawtext(32, 160, strbuffer);
     arch_exit();
 }
+#endif
 
 //=============================================================================
 extern void setSystemRam(void);
-extern void getRamStatus(void);
-typedef void (*assert_handler_t)(const char * file, int line, const char * expr,
-                                 const char * msg, const char * func);
-assert_handler_t assert_set_handler(assert_handler_t hnd);
 static void gfx_dc_init(UNUSED const char *game_name, UNUSED bool start_in_fullscreen) {
-    assert_set_handler(assert_hnd);
+    //assert_set_handler(assert_hnd);
     setSystemRam();
-    getRamStatus();
 
     /* init */
     last_time = GetSystemTimeLow();
