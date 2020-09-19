@@ -660,7 +660,7 @@ u64 *synthesis_process_notes(s16 *aiBuf, s32 bufLen, u64 *cmd) {
     s32 s5Aligned;
 #endif
     s32 resampledTempLen;                    // spD8, spAC
-    u16 noteSamplesDmemAddrBeforeResampling; // spD6, spAA
+    u16 noteSamplesDmemAddrBeforeResampling = 0; // spD6, spAA
 
 
 #ifndef VERSION_EU

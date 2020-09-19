@@ -284,7 +284,7 @@ void UNUSED gd_rot_mat_about_row(Mat4f *mat, s32 row, f32 ang) {
     vec.z = (*mat)[row][2];
 
     gd_create_rot_mat_angular(&rot, &vec, ang / 2.0);
-    gd_mult_mat4f(mat, &rot, mat);
+    gd_mult_mat4f((const Mat4f *)mat, (const Mat4f *)&rot, mat);
 }
 
 /**
@@ -316,7 +316,7 @@ void gd_absrot_mat4(Mat4f *mtx, s32 axisnum, f32 ang) {
     }
 
     gd_create_rot_mat_angular(&rMat, &rot, ang / 2.0); //? 2.0f
-    gd_mult_mat4f(mtx, &rMat, mtx);
+    gd_mult_mat4f((const Mat4f *)mtx, (const Mat4f *)&rMat, mtx);
 }
 
 
@@ -864,7 +864,7 @@ void gd_mult_mat4f(const Mat4f *mA, const Mat4f *mB, Mat4f *dst) {
     Mat4f res;
 
     MAT4_MULTIPLY((*mA), (*mB), res);
-    gd_copy_mat4f(&res, dst);
+    gd_copy_mat4f((const Mat4f *)&res, dst);
 }
 
 #undef MAT4_MULTIPLY
@@ -959,8 +959,8 @@ void UNUSED gd_rot_mat_offset(Mat4f *dst, f32 x, f32 y, f32 z, s32 copy) {
 
     gd_create_rot_matrix(&rot, &vec, s, c);
     if (!copy) {
-        gd_mult_mat4f(dst, &rot, dst);
+        gd_mult_mat4f((const Mat4f *)dst, (const Mat4f *)&rot, dst);
     } else {
-        gd_copy_mat4f(&rot, dst);
+        gd_copy_mat4f((const Mat4f *)&rot, dst);
     }
 }

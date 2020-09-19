@@ -2918,14 +2918,14 @@ void d_get_matrix(Mat4f *dst) {
     dynobj = sDynListCurObj;
     switch (sDynListCurObj->type) {
         case OBJ_TYPE_NETS:
-            gd_copy_mat4f(&((struct ObjNet *) dynobj)->mat128, dst);
+            gd_copy_mat4f((const Mat4f *)&((struct ObjNet *) dynobj)->mat128, dst);
             break;
             break; // lol
         case OBJ_TYPE_JOINTS:
-            gd_copy_mat4f(&((struct ObjJoint *) dynobj)->matE8, dst);
+            gd_copy_mat4f((const Mat4f *)&((struct ObjJoint *) dynobj)->matE8, dst);
             break;
         case OBJ_TYPE_CAMERAS:
-            gd_copy_mat4f(&((struct ObjCamera *) dynobj)->unkE8, dst);
+            gd_copy_mat4f((const Mat4f *)&((struct ObjCamera *) dynobj)->unkE8, dst);
             break;
         case OBJ_TYPE_PARTICLES:
             gd_set_identity_mat4(dst);
@@ -2949,16 +2949,16 @@ void d_set_matrix(Mat4f *src) {
 
     switch (sDynListCurObj->type) {
         case OBJ_TYPE_NETS:
-            gd_copy_mat4f(src, &((struct ObjNet *) sDynListCurObj)->mat128);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjNet *) sDynListCurObj)->mat128);
             //! @bug When setting an `ObjNet` matrix, the source is copied twice
             //!      due to a probable copy-paste line repeat error
-            gd_copy_mat4f(src, &((struct ObjNet *) sDynListCurObj)->mat128);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjNet *) sDynListCurObj)->mat128);
             break;
         case OBJ_TYPE_JOINTS:
-            gd_copy_mat4f(src, &((struct ObjJoint *) sDynListCurObj)->matE8);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjJoint *) sDynListCurObj)->matE8);
             break;
         case OBJ_TYPE_CAMERAS:
-            gd_copy_mat4f(src, &((struct ObjCamera *) sDynListCurObj)->unk64);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjCamera *) sDynListCurObj)->unk64);
             break;
         default:
             fatal_printf("%s: Object '%s'(%x) does not support this function.", "dSetMatrix()",
@@ -2977,10 +2977,10 @@ void d_set_rot_mtx(Mat4f *src) {
 
     switch (sDynListCurObj->type) {
         case OBJ_TYPE_JOINTS:
-            gd_copy_mat4f(src, &((struct ObjJoint *) sDynListCurObj)->mat128);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjJoint *) sDynListCurObj)->mat128);
             break;
         case OBJ_TYPE_NETS:
-            gd_copy_mat4f(src, &((struct ObjNet *) sDynListCurObj)->mat168);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjNet *) sDynListCurObj)->mat168);
             break;
         default:
             fatal_printf("%s: Object '%s'(%x) does not support this function.", "dSetRMatrix()",
@@ -3021,10 +3021,10 @@ void d_set_idn_mtx(Mat4f *src) {
     dynobj = sDynListCurObj;
     switch (sDynListCurObj->type) {
         case OBJ_TYPE_NETS:
-            gd_copy_mat4f(src, &((struct ObjNet *) dynobj)->matE8);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjNet *) dynobj)->matE8);
             break;
         case OBJ_TYPE_JOINTS:
-            gd_copy_mat4f(src, &((struct ObjJoint *) dynobj)->mat168);
+            gd_copy_mat4f((const Mat4f *)src, &((struct ObjJoint *) dynobj)->mat168);
             break;
         case OBJ_TYPE_LIGHTS:
             ((struct ObjLight *) dynobj)->position.x = (*src)[3][0];

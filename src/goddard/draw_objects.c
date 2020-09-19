@@ -251,7 +251,7 @@ void draw_shape_2d(struct ObjShape *shape, s32 flag, UNUSED f32 c, UNUSED f32 d,
         sp1C.y = g;
         sp1C.z = h;
         if (gViewUpdateCamera != NULL) {
-            gd_rotate_and_translate_vec3f(&sp1C, &gViewUpdateCamera->unkE8);
+            gd_rotate_and_translate_vec3f(&sp1C, (const Mat4f *)&gViewUpdateCamera->unkE8);
         }
         translate_load_mtx_gddl(sp1C.x, sp1C.y, sp1C.z);
     }
@@ -686,7 +686,7 @@ void func_80179B64(struct ObjGroup *group) {
 
 /* 22836C -> 228498 */
 void func_80179B9C(struct GdVec3f *pos, struct ObjCamera *cam, struct ObjView *view) {
-    gd_rotate_and_translate_vec3f(pos, &cam->unkE8);
+    gd_rotate_and_translate_vec3f(pos, (const Mat4f *)&cam->unkE8);
     if (pos->z > -256.0f) {
         return;
     }

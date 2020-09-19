@@ -618,7 +618,7 @@ static void gfx_opengl_init(void) {
     config.autosort_enabled = GL_TRUE;
     config.fsaa_enabled = GL_FALSE;
     /*@Note: These should be adjusted at some point */
-    config.initial_op_capacity = 3072;
+    config.initial_op_capacity = 3584;
     config.initial_pt_capacity = 1024;
     config.initial_tr_capacity = 2048;
     config.initial_immediate_capacity = 0;

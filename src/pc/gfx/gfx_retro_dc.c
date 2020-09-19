@@ -565,7 +565,7 @@ static void calculate_normal_dir(const Light_t *light, float coeffs[3]) {
         light->dir[1] / 127.0f,
         light->dir[2] / 127.0f
     };
-    gfx_transposed_matrix_mul(coeffs, light_dir, rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
+    gfx_transposed_matrix_mul(coeffs, light_dir, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
     gfx_normalize_vector(coeffs);
 }
 
@@ -606,7 +606,7 @@ static void gfx_sp_matrix(uint8_t parameters, const int32_t *addr) {
         if (parameters & G_MTX_LOAD) {
             memcpy(rsp.P_matrix, matrix, sizeof(matrix));
         } else {
-            gfx_matrix_mul(rsp.P_matrix, matrix, rsp.P_matrix);
+            gfx_matrix_mul(rsp.P_matrix, (const float (*)[4])matrix, (const float (*)[4])rsp.P_matrix);
         }
         glMatrixMode(GL_PROJECTION);
         glLoadMatrixf((const float*)rsp.P_matrix);
@@ -618,13 +618,13 @@ static void gfx_sp_matrix(uint8_t parameters, const int32_t *addr) {
         if (parameters & G_MTX_LOAD) {
             memcpy(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], matrix, sizeof(matrix));
         } else {
-            gfx_matrix_mul(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], matrix, rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
+            gfx_matrix_mul(rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
         }
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixf((const float*)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
         rsp.lights_changed = 1;
     }
-    gfx_matrix_mul(rsp.MP_matrix, rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], rsp.P_matrix);
+    gfx_matrix_mul(rsp.MP_matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])rsp.P_matrix);
 }
 
 static void gfx_sp_pop_matrix(uint32_t count) {
@@ -634,7 +634,7 @@ static void gfx_sp_pop_matrix(uint32_t count) {
         }
     }
     if (rsp.modelview_matrix_stack_size > 0) {
-        gfx_matrix_mul(rsp.MP_matrix, rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], rsp.P_matrix);
+        gfx_matrix_mul(rsp.MP_matrix, (const float (*)[4])rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1], (const float (*)[4])rsp.P_matrix);
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixf((const float*)rsp.modelview_matrix_stack[rsp.modelview_matrix_stack_size - 1]);
     }

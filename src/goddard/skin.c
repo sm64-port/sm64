@@ -58,8 +58,8 @@ void reset_net(struct ObjNet *net) {
     net->unkA4.x = net->unkA4.y = net->unkA4.z = 0.0f;
 
     func_80191F10(net);
-    gd_print_vec("net scale: ", &net->unk1AC);
-    gd_print_plane("net box: ", &net->unkBC);
+    gd_print_vec("net scale: ", (const struct GdVec3f *)&net->unk1AC);
+    gd_print_plane("net box: ", (const struct GdPlaneF *)&net->unkBC);
 
     gGdSkinNet = net;
     D_801BAAF4 = 0;
@@ -67,7 +67,7 @@ void reset_net(struct ObjNet *net) {
     gd_set_identity_mat4(&net->matE8);
     gd_rot_mat_about_vec(&net->matE8, &net->unk68); // set rot mtx to initial rotation?
     gd_add_vec3f_to_mat4f_offset(&net->matE8, &net->unk14); // set to initial position?
-    gd_copy_mat4f(&net->matE8, &net->mat128);
+    gd_copy_mat4f((const Mat4f *)&net->matE8, &net->mat128);
 
     if ((grp = net->unk1C8) != NULL) {
         apply_to_obj_types_in_group(OBJ_TYPE_JOINTS, (applyproc_t) func_80191604, grp);
@@ -213,7 +213,7 @@ void func_80192AD0(struct ObjNet *net) {
     net->unk14.x = net->unk1F4.x;
     net->unk14.y = net->unk1F4.y;
     net->unk14.z = net->unk1F4.z;
-    gd_rotate_and_translate_vec3f(&net->unk14, &sp18->mat128);
+    gd_rotate_and_translate_vec3f(&net->unk14, (const Mat4f *)&sp18->mat128);
 
     net->unk14.x += net->unk1F0->unk14.x;
     net->unk14.y += net->unk1F0->unk14.y;
@@ -221,7 +221,7 @@ void func_80192AD0(struct ObjNet *net) {
     net->unk200.x = 0.0f;
     net->unk200.y = 10.0f;
     net->unk200.z = -4.0f;
-    gd_rotate_and_translate_vec3f(&net->unk200, &sp18->mat128);
+    gd_rotate_and_translate_vec3f(&net->unk200, (const Mat4f *)&sp18->mat128);
 
     apply_to_obj_types_in_group(OBJ_TYPE_JOINTS, (applyproc_t) func_80191824, sp60);
     func_80191E88(sp60);
@@ -259,7 +259,7 @@ void func_80192CCC(struct ObjNet *net) {
         sp24.y = net->mat128[0][1];
         sp24.z = net->mat128[0][2];
         gd_create_rot_mat_angular(&sp38, &sp24, 4.0f);
-        gd_mult_mat4f(&sp38, &D_801B9DC8, &D_801B9DC8);
+        gd_mult_mat4f((const Mat4f *)&sp38, (const Mat4f *)&D_801B9DC8, &D_801B9DC8);
         net->unkA4.x = net->unkA4.y = net->unkA4.z = 0.0f;
     }
 
@@ -268,7 +268,7 @@ void func_80192CCC(struct ObjNet *net) {
         sp24.y = net->mat128[0][1];
         sp24.z = net->mat128[0][2];
         gd_create_rot_mat_angular(&sp38, &sp24, -4.0f);
-        gd_mult_mat4f(&sp38, &D_801B9DC8, &D_801B9DC8);
+        gd_mult_mat4f((const Mat4f *)&sp38, (const Mat4f *)&D_801B9DC8, &D_801B9DC8);
         net->unkA4.x = net->unkA4.y = net->unkA4.z = 0.0f;
     }
 
@@ -290,7 +290,7 @@ void func_80192CCC(struct ObjNet *net) {
     }
 
     func_801926A4(net);
-    gd_mult_mat4f(&net->mat128, &D_801B9DC8, &net->mat128);
+    gd_mult_mat4f((const Mat4f *)&net->mat128, (const Mat4f *)&D_801B9DC8, &net->mat128);
     if (group != NULL) {
         apply_to_obj_types_in_group(OBJ_TYPE_JOINTS, (applyproc_t) func_801913C0, group);
         apply_to_obj_types_in_group(OBJ_TYPE_BONES, (applyproc_t) func_8018FA68, group);
@@ -494,27 +494,27 @@ void func_80193848(struct ObjGroup *group) {
 /* 24208C -> 2422E0; not called; orig name: func_801938BC */
 void gd_print_net(struct ObjNet *net) {
     gd_printf("Flags:%x\n", net->unk34);
-    gd_print_vec("World:", &net->unk14);
-    gd_print_vec("Force:", &net->unk44);
-    gd_print_vec("Vel:", &net->unk50);
-    gd_print_vec("Rot:", &net->unk5C);
-    gd_print_vec("CollDisp:", &net->unk74);
-    gd_print_vec("CollTorque:", &net->unk80);
-    gd_print_vec("CollTorqueL:", &net->unk8C);
-    gd_print_vec("CollTorqueD:", &net->unk98);
-    gd_print_vec("Torque:", &net->unkA4);
-    gd_print_vec("CofG:", &net->unkB0);
-    gd_print_plane("BoundBox:", &net->unkBC);
-    gd_print_vec("CollDispOff:", &net->unkD4);
+    gd_print_vec("World:", (const struct GdVec3f *)&net->unk14);
+    gd_print_vec("Force:", (const struct GdVec3f *)&net->unk44);
+    gd_print_vec("Vel:", (const struct GdVec3f *)&net->unk50);
+    gd_print_vec("Rot:", (const struct GdVec3f *)&net->unk5C);
+    gd_print_vec("CollDisp:", (const struct GdVec3f *)&net->unk74);
+    gd_print_vec("CollTorque:", (const struct GdVec3f *)&net->unk80);
+    gd_print_vec("CollTorqueL:", (const struct GdVec3f *)&net->unk8C);
+    gd_print_vec("CollTorqueD:", (const struct GdVec3f *)&net->unk98);
+    gd_print_vec("Torque:", (const struct GdVec3f *)&net->unkA4);
+    gd_print_vec("CofG:", (const struct GdVec3f *)&net->unkB0);
+    gd_print_plane("BoundBox:", (const struct GdPlaneF *)&net->unkBC);
+    gd_print_vec("CollDispOff:", (const struct GdVec3f *)&net->unkD4);
     gd_printf("CollMaxD: %f\n", net->unkE0);
     gd_printf("MaxRadius: %f\n", net->unkE4);
-    gd_print_mtx("Matrix:", &net->mat128);
+    gd_print_mtx("Matrix:", (const Mat4f *)&net->mat128);
     if (net->unk1A8 != NULL) {
         gd_printf("ShapePtr: %x (%s)\n", (u32) (uintptr_t) net->unk1A8, net->unk1A8->name);
     } else {
         gd_printf("ShapePtr: NULL\n");
     }
-    gd_print_vec("Scale:", &net->unk1AC);
+    gd_print_vec("Scale:", (const struct GdVec3f *)&net->unk1AC);
     gd_printf("Mass: %f\n", net->unk1B8);
     gd_printf("NumModes: %d\n", net->unk1BC);
     gd_printf("NodeGroup: %x\n", (u32) (uintptr_t) net->unk1C8);

@@ -1106,7 +1106,7 @@ void func_8017E584(struct ObjNet *a0, struct GdVec3f *a1, struct GdVec3f *a2) {
     sp1C.y = a0->unkB0.y;
     sp1C.z = a0->unkB0.z;
 
-    gd_rotate_and_translate_vec3f(&sp1C, &a0->mat128);
+    gd_rotate_and_translate_vec3f(&sp1C, (const Mat4f *)&a0->mat128);
 
     sp7C.x -= sp1C.x;
     sp7C.y -= sp1C.y;
@@ -1155,7 +1155,7 @@ void func_8017E838(struct ObjNet *a0, struct GdVec3f *a1, struct GdVec3f *a2) {
     sp18.y = a0->unkB0.y;
     sp18.z = a0->unkB0.z;
 
-    gd_rotate_and_translate_vec3f(&sp18, &a0->mat128);
+    gd_rotate_and_translate_vec3f(&sp18, (const Mat4f *)&a0->mat128);
 
     sp64.x -= sp18.x;
     sp64.y -= sp18.y;
@@ -1186,7 +1186,7 @@ void func_8017E9EC(struct ObjNet *a0) {
     gd_normalize_vec3f(&sp5C);
     sp18 = gd_vec3f_magnitude(&a0->unkA4);
     gd_create_rot_mat_angular(&sp1C, &sp5C, -sp18);
-    gd_mult_mat4f(&D_801B9DC8, &sp1C, &D_801B9DC8);
+    gd_mult_mat4f((const Mat4f *)&D_801B9DC8, (const Mat4f *)&sp1C, &D_801B9DC8);
 }
 
 /* @ 22D264 for 0x90 */
@@ -1344,8 +1344,8 @@ s32 func_8017F054(struct GdObj *a0, struct GdObj *a1) {
         d_get_scale(&sp1C);
         sp48 = d_get_matrix_ptr();
 
-        gd_mult_mat4f(sp4C, sp50, sp48);
-        gd_mult_mat4f(sp4C, sp44, sp40);
+        gd_mult_mat4f((const Mat4f *)sp4C, (const Mat4f *)sp50, sp48);
+        gd_mult_mat4f((const Mat4f *)sp4C, (const Mat4f *)sp44, sp40);
         gd_scale_mat4f_by_vec3f(sp40, &sp1C);
     } else {
         set_cur_dynobj(a0);
@@ -1355,7 +1355,7 @@ s32 func_8017F054(struct GdObj *a0, struct GdObj *a1) {
 
         d_get_scale(&sp1C);
         gd_set_identity_mat4(sp48);
-        gd_copy_mat4f(sp4C, sp44);
+        gd_copy_mat4f((const Mat4f *)sp4C, sp44);
         gd_scale_mat4f_by_vec3f(sp44, &sp1C);
     }
 
@@ -1398,7 +1398,7 @@ s32 func_8017F210(struct GdObj *a0, struct GdObj *a1) {
         sp50 = (Mat4f *) d_get_rot_mtx_ptr();
 
         d_get_scale(&sp2C);
-        gd_mult_mat4f(sp5C, sp54, sp50);
+        gd_mult_mat4f((const Mat4f *)sp5C, (const Mat4f *)sp54, sp50);
         gd_scale_mat4f_by_vec3f(sp50, &sp2C);
     } else {
         set_cur_dynobj(a0);
@@ -1407,7 +1407,7 @@ s32 func_8017F210(struct GdObj *a0, struct GdObj *a1) {
         sp54 = (Mat4f *) d_get_rot_mtx_ptr();
 
         d_get_scale(&sp2C);
-        gd_copy_mat4f(sp5C, sp54);
+        gd_copy_mat4f((const Mat4f *)sp5C, sp54);
         gd_scale_mat4f_by_vec3f(sp54, &sp2C);
     }
 
@@ -1426,7 +1426,7 @@ s32 func_8017F210(struct GdObj *a0, struct GdObj *a1) {
 
 /* @ 22DB9C for 0x38; a0 might be ObjUnk200000* */
 void func_8017F3CC(struct Unk8017F3CC *a0) {
-    gd_rotate_and_translate_vec3f(&a0->unk20, D_801B9E48);
+    gd_rotate_and_translate_vec3f(&a0->unk20, (const Mat4f *)D_801B9E48);
 }
 
 /* @ 22DBD4 for 0x20 */
@@ -1724,7 +1724,7 @@ void drag_picked_object(struct GdObj *inputObj) {
     spD0.z = 0.0f;
 
     gd_inverse_mat4f(&gViewUpdateCamera->unkE8, &sp40);
-    gd_mat4f_mult_vec3f(&spD0, &sp40);
+    gd_mat4f_mult_vec3f(&spD0, (const Mat4f *)&sp40);
 
     obj = inputObj;
     if ((inputObj->drawFlags & OBJ_PICKED) && gGdCtrl.btnApressed) {
@@ -1748,7 +1748,7 @@ void drag_picked_object(struct GdObj *inputObj) {
                 spC4.y = spD0.y;
                 spC4.z = spD0.z;
 
-                gd_mat4f_mult_vec3f(&spC4, &sp80);
+                gd_mat4f_mult_vec3f(&spC4, (const Mat4f *)&sp80);
                 ((struct ObjNet *) obj)->matE8[3][0] += spD0.x;
                 ((struct ObjNet *) obj)->matE8[3][1] += spD0.y;
                 ((struct ObjNet *) obj)->matE8[3][2] += spD0.z;
@@ -1880,8 +1880,8 @@ void move_camera(struct ObjCamera *cam) {
     spD4.y += spB0.y;
     spD4.z += spB0.z;
 
-    gd_mult_mat4f(sp2C, &cam->unkA8, &cam->unkA8);
-    gd_mat4f_mult_vec3f(&spD4, &cam->unkA8);
+    gd_mult_mat4f((const Mat4f *)sp2C, (const Mat4f *)&cam->unkA8, &cam->unkA8);
+    gd_mat4f_mult_vec3f(&spD4, (const Mat4f *)&cam->unkA8);
 
     cam->unk14.x = spD4.x;
     cam->unk14.y = spD4.y;
@@ -1946,14 +1946,14 @@ void func_8018100C(struct ObjLight *light) {
     gd_absrot_mat4(&mtx, GD_Y_AXIS, light->unk68.y);
     gd_absrot_mat4(&mtx, GD_X_AXIS, light->unk68.x);
     gd_absrot_mat4(&mtx, GD_Z_AXIS, light->unk68.z);
-    gd_mat4f_mult_vec3f(&light->unk8C, &mtx);
+    gd_mat4f_mult_vec3f(&light->unk8C, (const Mat4f *)&mtx);
 
     light->position.x = light->unk8C.x;
     light->position.y = light->unk8C.y;
     light->position.z = light->unk8C.z;
     return;
     // even more unreachable
-    gd_mat4f_mult_vec3f(&light->unk80, &mtx);
+    gd_mat4f_mult_vec3f(&light->unk80, (const Mat4f *)&mtx);
     imout(); // this call would cause an issue if it was reachable
 }
 

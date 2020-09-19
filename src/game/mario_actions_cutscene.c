@@ -1487,7 +1487,7 @@ s32 act_squished(struct MarioState *m) {
     UNUSED s32 pad;
     f32 squishAmount;
     f32 spaceUnderCeil;
-    s16 surfAngle;
+    s16 surfAngle = 0;
     s32 underSteepSurf = FALSE; // seems to be responsible for setting velocity?
 
     if ((spaceUnderCeil = m->ceilHeight - m->floorHeight) < 0) {
