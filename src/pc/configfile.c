@@ -176,8 +176,9 @@ void configfile_load(const char *filename) {
         if (numTokens != 0) {
             if (numTokens == 2) {
                 const struct ConfigOption *option = NULL;
+                unsigned int i;
 
-                for (unsigned int i = 0; i < ARRAY_LEN(options); i++) {
+                for (i = 0; i < ARRAY_LEN(options); i++) {
                     if (strcmp(tokens[0], options[i].name) == 0) {
                         option = &options[i];
                         break;
@@ -226,6 +227,7 @@ void configfile_load(const char *filename) {
 // Writes the config file to 'filename'
 void configfile_save(const char *filename) {
     FILE *file;
+    unsigned int i;
 
     printf("Saving configuration to '%s'\n", filename);
 
@@ -235,7 +237,7 @@ void configfile_save(const char *filename) {
         return;
     }
 
-    for (unsigned int i = 0; i < ARRAY_LEN(options); i++) {
+    for (i = 0; i < ARRAY_LEN(options); i++) {
         const struct ConfigOption *option = &options[i];
 
         switch (option->type) {
@@ -246,7 +248,7 @@ void configfile_save(const char *filename) {
                 fprintf(file, "%s %u\n", option->name, *option->uintValue);
                 break;
             case CONFIG_TYPE_FLOAT:
-                fprintf(file, "%s %f\n", option->name, *option->floatValue);
+                fprintf(file, "%s %f\n", option->name, (double)*option->floatValue);
                 break;
             default:
                 assert(0); // unknown type

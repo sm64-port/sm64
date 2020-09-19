@@ -945,21 +945,19 @@ pbp: $(EXE)
 .PHONY: pbp
 endif
 ifeq ($(TARGET_DC),1)
-	sh-elf-objcopy -R .stack -O binary $@ $@.bin
 
 # Unused for now, might be later
-#include $(KOS_BASE)/Makefile.rules
-#elf: $(EXE)
-#	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(EXE).elf $(KOS_START) \
-#		$(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS) -lm -lkosutils $(KOS_LIBS)
-#	sh-elf-objcopy -R .stack -O binary $(EXE).elf $(EXE).bin
+include $(KOS_BASE)/Makefile.rules
+elf: $(EXE)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(EXE).elf $(KOS_START) \
+		$(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS) -lm -lkosutils $(KOS_LIBS)
+	sh-elf-objcopy -R .stack -O binary $(EXE).elf $(EXE).bin
 
-#scramble: elf
-scramble: $(EXE)
+scramble: elf
 	$(KOS_BASE)/utils/scramble/scramble $(EXE).bin $(BUILD_DIR)/1ST_READ.bin
 
 .PHONY: scramble
-#.PHONY: elf
+.PHONY: elf
 endif
 endif
 
