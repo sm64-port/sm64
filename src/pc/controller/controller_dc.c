@@ -60,13 +60,12 @@ static void controller_dc_init(void) {
 }
 
 // n64 controls https://strategywiki.org/wiki/Super_Mario_64/Controls
-// PSP -> N64 control mapping
-//  SQUARE   -> B
-//  CROSS    -> A
-//  TRIANGLE -> L Trigger /* Literally unused in the game */
-//  CIRCLE   -> Z Trigger
+// DC -> N64 control mapping
+//  B, X     -> B
+//  A        -> A
+//  Y        -> R Trigger
 //  L Trig   -> Z Trigger
-//  R Trig   -> R Trigger
+//  R Trig   -> Z Trigger
 //  Analog   -> Move
 //  Start    -> Start
 //  DPad     -> Camera buttons
@@ -91,16 +90,16 @@ static void controller_dc_read(OSContPad *pad) {
     }
     if (state->buttons & CONT_START)
         pad->button |= START_BUTTON;
-    if (state->buttons & CONT_B)
+    if ((state->buttons & CONT_B) || (state->buttons & CONT_X))
         pad->button |= B_BUTTON;
     if (state->buttons & CONT_A)
         pad->button |= A_BUTTON;
     if (state->buttons & CONT_Y)
-        pad->button |= L_TRIG;
-    if (((uint8_t) state->ltrig & 255))
-        pad->button |= Z_TRIG;
-    if (((uint8_t) state->rtrig & 255))
         pad->button |= R_TRIG;
+    if (((uint8_t) state->ltrig & 0x80 /* 128 */))
+        pad->button |= Z_TRIG;
+    if (((uint8_t) state->rtrig & 0x80 /* 128 */))
+        pad->button |= Z_TRIG;
     if (state->buttons & CONT_DPAD_UP)
         pad->button |= U_CBUTTONS;
     if (state->buttons & CONT_DPAD_DOWN)
