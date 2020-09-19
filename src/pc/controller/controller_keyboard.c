@@ -15,7 +15,9 @@ static int keyboard_mapping[13][2];
 
 static int keyboard_map_scancode(int scancode) {
     int ret = 0;
-    for (size_t i = 0; i < sizeof(keyboard_mapping) / sizeof(keyboard_mapping[0]); i++) {
+    size_t i;
+
+    for (i = 0; i < sizeof(keyboard_mapping) / sizeof(keyboard_mapping[0]); i++) {
         if (keyboard_mapping[i][0] == scancode) {
             ret |= keyboard_mapping[i][1];
         }
