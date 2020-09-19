@@ -993,6 +993,178 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     }
 }
 
+extern void gfx_opengl_draw_triangles_2d(float buf_vbo[], UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris);
+static void gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, uint8_t vtx1_idx2, uint8_t vtx2_idx2, uint8_t vtx3_idx2) {
+    gfx_flush();
+    struct LoadedVertex *v1 = &rsp.loaded_vertices[vtx1_idx];
+    struct LoadedVertex *v2 = &rsp.loaded_vertices[vtx2_idx];
+    struct LoadedVertex *v3 = &rsp.loaded_vertices[vtx3_idx];
+
+    struct LoadedVertex *v12 = &rsp.loaded_vertices[vtx1_idx2];
+    struct LoadedVertex *v22 = &rsp.loaded_vertices[vtx2_idx2];
+    struct LoadedVertex *v32 = &rsp.loaded_vertices[vtx3_idx2];
+
+    struct LoadedVertex *v_arr[6] = {v1, v2, v3, v12, v22, v32};
+
+    bool depth_test = (rsp.geometry_mode & G_ZBUFFER) == G_ZBUFFER;
+    if (depth_test != rendering_state.depth_test) {
+        gfx_flush();
+        gfx_rapi->set_depth_test(depth_test);
+        rendering_state.depth_test = depth_test;
+    }
+    
+    bool z_upd = (rdp.other_mode_l & Z_UPD) == Z_UPD;
+    if (z_upd != rendering_state.depth_mask) {
+        gfx_flush();
+        gfx_rapi->set_depth_mask(z_upd);
+        rendering_state.depth_mask = z_upd;
+    }
+    
+    bool zmode_decal = (rdp.other_mode_l & ZMODE_DEC) == ZMODE_DEC;
+    if (zmode_decal != rendering_state.decal_mode) {
+        gfx_flush();
+        gfx_rapi->set_zmode_decal(zmode_decal);
+        rendering_state.decal_mode = zmode_decal;
+    }
+    
+    if (rdp.viewport_or_scissor_changed) {
+        if (memcmp(&rdp.viewport, &rendering_state.viewport, sizeof(rdp.viewport)) != 0) {
+            gfx_flush();
+            gfx_rapi->set_viewport(rdp.viewport.x, rdp.viewport.y, rdp.viewport.width, rdp.viewport.height);
+            rendering_state.viewport = rdp.viewport;
+        }
+        if (memcmp(&rdp.scissor, &rendering_state.scissor, sizeof(rdp.scissor)) != 0) {
+            gfx_flush();
+            gfx_rapi->set_scissor(rdp.scissor.x, rdp.scissor.y, rdp.scissor.width, rdp.scissor.height);
+            rendering_state.scissor = rdp.scissor;
+        }
+        rdp.viewport_or_scissor_changed = false;
+    }
+    uint32_t cc_id = rdp.combine_mode;
+    
+    bool use_alpha = (rdp.other_mode_l & (G_BL_A_MEM << 18)) == 0;
+    bool use_fog = (rdp.other_mode_l >> 30) == G_BL_CLR_FOG;
+    bool texture_edge = (rdp.other_mode_l & CVG_X_ALPHA) == CVG_X_ALPHA;
+    bool use_noise = (rdp.other_mode_l & G_AC_DITHER) == G_AC_DITHER;
+    
+    if (texture_edge) {
+        use_alpha = true;
+    }
+    
+    if (use_alpha) cc_id |= SHADER_OPT_ALPHA;
+    if (use_fog) cc_id |= SHADER_OPT_FOG;
+    if (texture_edge) cc_id |= SHADER_OPT_TEXTURE_EDGE;
+    if (use_noise) cc_id |= SHADER_OPT_NOISE;
+    
+    if (!use_alpha) {
+        cc_id &= ~0xfff000;
+    }
+    
+    struct ColorCombiner *comb = gfx_lookup_or_create_color_combiner(cc_id);
+    struct ShaderProgram *prg = comb->prg;
+    if (prg != rendering_state.shader_program) {
+        gfx_flush();
+        gfx_rapi->unload_shader(rendering_state.shader_program);
+        gfx_rapi->load_shader(prg);
+        rendering_state.shader_program = prg;
+    }
+
+    if (use_alpha != rendering_state.alpha_blend) {
+        gfx_flush();
+        gfx_rapi->set_use_alpha(use_alpha);
+        rendering_state.alpha_blend = use_alpha;
+    }
+    uint8_t num_inputs;
+    bool used_textures[2];
+    gfx_rapi->shader_get_info(prg, &num_inputs, used_textures);
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (used_textures[i]) {
+            if (rdp.textures_changed[i]) {
+                gfx_flush();
+                import_texture(i);
+                rdp.textures_changed[i] = false;
+            }
+            bool linear_filter = (rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT;
+            if (linear_filter != rendering_state.textures[i]->linear_filter || rdp.texture_tile.cms != rendering_state.textures[i]->cms || rdp.texture_tile.cmt != rendering_state.textures[i]->cmt) {
+                gfx_flush();
+                gfx_rapi->set_sampler_parameters(i, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
+                rendering_state.textures[i]->linear_filter = linear_filter;
+                rendering_state.textures[i]->cms = rdp.texture_tile.cms;
+                rendering_state.textures[i]->cmt = rdp.texture_tile.cmt;
+            }
+        }
+    }
+    
+    bool use_texture = used_textures[0] || used_textures[1];
+    uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
+    uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
+
+    float tri_buf[10*6] = {0};
+    int tri_num_vert = 0;
+
+    for (i = 0; i < 6; i++) {
+        tri_buf[tri_num_vert++] = v_arr[i]->x;
+        tri_buf[tri_num_vert++] = v_arr[i]->y;
+        tri_buf[tri_num_vert++] = v_arr[i]->z;
+        
+        if (use_texture) {
+            float u = (v_arr[i]->u - rdp.texture_tile.uls * 8) / 32.0f;
+            float v = (v_arr[i]->v - rdp.texture_tile.ult * 8) / 32.0f;
+            if ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT) {
+                // Linear filter adds 0.5f to the coordinates
+                u += 0.5f;
+                v += 0.5f;
+            }
+            tri_buf[tri_num_vert++] = u / tex_width;
+            tri_buf[tri_num_vert++] = v / tex_height;
+        }
+
+        struct RGBA white = (struct RGBA){0xff, 0xff, 0xff, 0xff};
+        struct RGBA *color = &white;
+        struct RGBA tmp;
+        int j, k;
+
+        for (j = 0; j < num_inputs; j++) {
+            /*@Note: use_alpha ? 1 : 0 */
+            for (k = 0; k < 1 + (use_alpha ? 0 : 0); k++) {
+                switch (comb->shader_input_mapping[k][j]) {
+                    case CC_PRIM:
+                        color = &rdp.prim_color;
+                        break;
+                    case CC_SHADE:
+                        color = &v_arr[i]->color;
+                        break;
+                    case CC_ENV:
+                        color = &rdp.env_color;
+                        break;
+                    case CC_LOD:
+                    {
+                        float distance_frac = (v1->w - 3000.0f) / 3000.0f;
+                        if (distance_frac < 0.0f) distance_frac = 0.0f;
+                        if (distance_frac > 1.0f) distance_frac = 1.0f;
+                        tmp.r = tmp.g = tmp.b = tmp.a = distance_frac * 255.0f;
+                        color = &tmp;
+                        break;
+                    }
+                    default:
+                        //memset(&tmp, 0, sizeof(tmp));
+                        //color = &tmp;
+                        color = &white;
+                        break;
+                }
+            }
+        }
+        //struct RGBA *color = &v_arr[i]->color;
+        tri_buf[tri_num_vert++] = color->r / 255.0f;
+        tri_buf[tri_num_vert++] = color->g / 255.0f;
+        tri_buf[tri_num_vert++] = color->b / 255.0f;
+        tri_buf[tri_num_vert++] = color->a / 255.0f;
+    }
+    gfx_opengl_draw_triangles_2d(tri_buf, 0, use_texture);
+}
+
 static void gfx_sp_geometry_mode(uint32_t clear, uint32_t set) {
     rsp.geometry_mode &= ~clear;
     rsp.geometry_mode |= set;
@@ -1261,6 +1433,7 @@ static void gfx_dp_set_fill_color(uint32_t packed_color) {
 void gfx_opengl_2d_projection(void) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glOrtho(0, 640, 480, 0, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -1279,76 +1452,47 @@ static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lr
     if (cycle_type == G_CYC_COPY) {
         rdp.other_mode_h = (rdp.other_mode_h & ~(3U << G_MDSFT_TEXTFILT)) | G_TF_POINT;
     }
-    /*@Note: for 2d HUD, needs more investigation */
-    //gfx_opengl_2d_projection();
     
     // U10.2 coordinates
     float ulxf = ulx;
     float ulyf = uly;
     float lrxf = lrx;
     float lryf = lry;
-    
+
     ulxf = ulxf / (4.0f * HALF_SCREEN_WIDTH) - 1.0f;
-    ulyf = -(ulyf / (4.0f * HALF_SCREEN_HEIGHT)) + 1.0f;
+    ulyf = (ulyf / (4.0f * HALF_SCREEN_HEIGHT)) - 1.0f;
     lrxf = lrxf / (4.0f * HALF_SCREEN_WIDTH) - 1.0f;
-    lryf = -(lryf / (4.0f * HALF_SCREEN_HEIGHT)) + 1.0f;
+    lryf = (lryf / (4.0f * HALF_SCREEN_HEIGHT)) - 1.0f;
     
     ulxf = gfx_adjust_x_for_aspect_ratio(ulxf);
     lrxf = gfx_adjust_x_for_aspect_ratio(lrxf);
+
+    ulxf = (ulxf*320)+320;
+    lrxf = (lrxf*320)+320;
+
+    ulyf = (ulyf*240)+240;
+    lryf = (lryf*240)+240;
     
     struct LoadedVertex* ul = &rsp.loaded_vertices[MAX_VERTICES + 0];
     struct LoadedVertex* ll = &rsp.loaded_vertices[MAX_VERTICES + 1];
     struct LoadedVertex* lr = &rsp.loaded_vertices[MAX_VERTICES + 2];
     struct LoadedVertex* ur = &rsp.loaded_vertices[MAX_VERTICES + 3];
-#if 0
-    printf("2d ul[ %2.2f, %2.2f]\t lr[ %2.2f, %2.2f] "
-        "=> ul[ %2.2f, %2.2f]\t lr[ %2.2f, %2.2f]  \n", ulxf,ulyf, lrxf, lryf, (ulxf+1.0f)*320, (ulyf+1.0f)*240, (lrxf+1.0f)*320, (lryf+1.0f)*240);
-    
-    ulxf = (ulxf+1.0f)*320;
-    ulyf = (ulyf+1.0f)*240;
-    lrxf = (lrxf+1.0f)*320;
-    lryf = (lryf+1.0f)*240;
-#endif
 
     ul->x = ulxf;
     ul->y = ulyf;
-    ul->z = -1.0f;
-    ul->w = 1.0f;
-
-    ul->_x = ulxf;
-    ul->_y = ulyf;
-    ul->_z = -1.0f;
-    ul->_w = 1.0f;
+    ul->z = 1.0f;
     
     ll->x = ulxf;
     ll->y = lryf;
-    ll->z = -1.0f;
-    ll->w = 1.0f;
-    
-    ll->_x = ulxf;
-    ll->_y = lryf;
-    ll->_z = -1.0f;
-    ll->_w = 1.0f;
+    ll->z = 1.0f;
 
     lr->x = lrxf;
     lr->y = lryf;
-    lr->z = -1.0f;
-    lr->w = 1.0f;
-
-    lr->_x = lrxf;
-    lr->_y = lryf;
-    lr->_z = -1.0f;
-    lr->_w = 1.0f;
+    lr->z = 1.0f;
 
     ur->x = lrxf;
     ur->y = ulyf;
-    ur->z = -1.0f;
-    ur->w = 1.0f;
-
-    ur->_x = lrxf;
-    ur->_y = ulyf;
-    ur->_z = -1.0f;
-    ur->_w = 1.0f;
+    ur->z = 1.0f;
     
     // The coordinates for texture rectangle shall bypass the viewport setting
     struct XYWidthHeight default_viewport = {0, 0, gfx_current_dimensions.width, gfx_current_dimensions.height};
@@ -1358,12 +1502,8 @@ static void gfx_draw_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lr
     rdp.viewport = default_viewport;
     rdp.viewport_or_scissor_changed = true;
     rsp.geometry_mode = 0;
-    
-    gfx_sp_tri1(MAX_VERTICES + 0, MAX_VERTICES + 1, MAX_VERTICES + 3);
-    gfx_sp_tri1(MAX_VERTICES + 1, MAX_VERTICES + 2, MAX_VERTICES + 3);
-    /*@Note: for 2d HUD, needs more investigation */
-    //gfx_flush();
-    //gfx_opengl_reset_projection();
+
+    gfx_sp_quad_2d(MAX_VERTICES + 0, MAX_VERTICES + 1, MAX_VERTICES + 3, MAX_VERTICES + 1, MAX_VERTICES + 2, MAX_VERTICES + 3);
 
     rsp.geometry_mode = geometry_mode_saved;
     rdp.viewport = viewport_saved;
@@ -1746,8 +1886,6 @@ struct GfxRenderingAPI *gfx_get_current_rendering_api(void) {
 
 void gfx_start_frame(void) {
     gfx_wapi->handle_events();
-    /*@Note: for 2d HUD, needs more investigation */
-    //gfx_opengl_reset_projection();
     first_2d_in_frame = 0;
 }
 
