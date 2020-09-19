@@ -439,10 +439,6 @@ static void gfx_opengl_set_scissor(int x, int y, int width, int height) {
 }
 
 static void gfx_opengl_set_use_alpha(bool use_alpha) {
-    /* Level render hack to ignore fog */
-    if (cur_shader->shader_id == 52429312) {
-        return;
-    }
     gl_blend = use_alpha;
     if (use_alpha)
         glEnable(GL_BLEND);

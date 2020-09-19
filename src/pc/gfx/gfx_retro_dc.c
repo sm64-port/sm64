@@ -724,6 +724,8 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         d->_z = z;
         d->_w = w;
 
+        /* Remove Fog for now, re-enable later */
+        #if 0
         if (rsp.geometry_mode & G_FOG) {
             if (fabsf(w) < 0.001f) {
                 // To avoid division by zero
@@ -739,7 +741,9 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
             if (fog_z < 0) fog_z = 0;
             if (fog_z > 255) fog_z = 255;
             d->color.a = fog_z; // Use alpha variable to store fog factor
-        } else {
+        } else
+        #endif
+        {
             d->color.a = v->cn[3];
         }
     }
@@ -844,6 +848,10 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
         gfx_rapi->load_shader(prg);
         rendering_state.shader_program = prg;
     }
+    /*@Note: Level geo hack, disable blending */
+    if(prg->shader_id == 52428869){
+        use_alpha = false;
+    }
     if (use_alpha != rendering_state.alpha_blend) {
         gfx_flush();
         gfx_rapi->set_use_alpha(use_alpha);
@@ -905,7 +913,8 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
         struct RGBA *color = &white;
         struct RGBA tmp;
         for (int j = 0; j < num_inputs; j++) {
-            for (int k = 0; k < 1 + (use_alpha ? 1 : 0); k++) {
+            /*@Note: use_alpha ? 1 : 0 */
+            for (int k = 0; k < 1 + (use_alpha ? 0 : 0); k++) {
                 switch (comb->shader_input_mapping[k][j]) {
                     case CC_PRIM:
                         color = &rdp.prim_color;
@@ -922,7 +931,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
                         if (distance_frac < 0.0f) distance_frac = 0.0f;
                         if (distance_frac > 1.0f) distance_frac = 1.0f;
                         tmp.r = tmp.g = tmp.b = tmp.a = distance_frac * 255.0f;
-                        //color = &tmp;
+                        color = &tmp;
                         break;
                     }
                     default:
@@ -959,8 +968,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
             buf_vbo[buf_vbo_len++] = color->r / 255.0f;
             buf_vbo[buf_vbo_len++] = color->g / 255.0f;
             buf_vbo[buf_vbo_len++] = color->b / 255.0f;
-            //buf_vbo[buf_vbo_len++] = color->a / 255.0f;
-            buf_vbo[buf_vbo_len++] = 1.f;
+            buf_vbo[buf_vbo_len++] = color->a / 255.0f;
         }
 
     }

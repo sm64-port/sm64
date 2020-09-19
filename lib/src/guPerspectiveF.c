@@ -33,10 +33,11 @@ void guPerspectiveF(float mf[4][4], u16 *perspNorm, float fovy, float aspect, fl
 void guPerspective(Mtx *m, u16 *perspNorm, float fovy, float aspect, float near, float far,
                    float scale) {
     float mat[4][4];
+/* Really this is a native 16:9 aspect rendering hack, could be used on dc for anamophic */
 #if defined(TARGET_PSP)
     guPerspectiveF(mat, perspNorm, fovy, aspect*(1.0f/0.75555555555f), near, far, scale);
 #else 
-    guPerspectiveF(mat, perspNorm, fovy, aspect*(1.0f/0.75555555555f), near, far, scale);
+    guPerspectiveF(mat, perspNorm, fovy, aspect, near, far, scale);
 #endif
     guMtxF2L(mat, m);
 }
