@@ -16,7 +16,7 @@ struct GfxRenderingAPI {
     void (*shader_get_info)(struct ShaderProgram *prg, uint8_t *num_inputs, bool used_textures[2]);
     uint32_t (*new_texture)(void);
     void (*select_texture)(int tile, uint32_t texture_id);
-#if defined(TARGET_PSP)
+#if defined(TARGET_PSP) || defined(TARGET_DC)
     void (*upload_texture)(const uint8_t *rgba32_buf, int width, int height, unsigned int type);
 #else 
     void (*upload_texture)(const uint8_t *rgba32_buf, int width, int height);

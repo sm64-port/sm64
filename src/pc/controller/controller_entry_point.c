@@ -3,8 +3,10 @@
 #include "lib/src/libultra_internal.h"
 #include "lib/src/osContInternal.h"
 
+#if !defined(TARGET_PSP) && !defined(TARGET_DC)
 #include "controller_recorded_tas.h"
 #include "controller_keyboard.h"
+#endif
 
 #if defined(_WIN32) || defined(_WIN64)
 #include "controller_xinput.h"
@@ -21,7 +23,7 @@
 #endif
 
 static struct ControllerAPI *controller_implementations[] = {
-#if !defined(TARGET_PSP)
+#if !defined(TARGET_PSP) && !defined(TARGET_DC)
     &controller_recorded_tas,
     &controller_keyboard,
 #endif

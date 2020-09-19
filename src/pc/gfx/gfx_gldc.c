@@ -123,6 +123,28 @@ static void resample_32bit(const uint32_t *in, const int inwidth, const int inhe
   }
 }
 
+static void resample_16bit(const unsigned short *in, int inwidth, int inheight, unsigned short *out, int outwidth, int outheight) {
+    int i, j;
+    const unsigned short *inrow;
+    unsigned int frac, fracstep;
+
+    fracstep = inwidth * 0x10000 / outwidth;
+    for (i = 0; i < outheight; i++, out += outwidth) {
+        inrow = in + inwidth * (i * inheight / outheight);
+        frac = fracstep >> 1;
+        for (j = 0; j < outwidth; j += 4) {
+            out[j] = inrow[frac >> 16];
+            frac += fracstep;
+            out[j + 1] = inrow[frac >> 16];
+            frac += fracstep;
+            out[j + 2] = inrow[frac >> 16];
+            frac += fracstep;
+            out[j + 3] = inrow[frac >> 16];
+            frac += fracstep;
+        }
+    }
+}
+
 static inline uint32_t next_pot(uint32_t v) {
     v--;
     v |= v >> 1;
@@ -339,25 +361,21 @@ static void gfx_opengl_select_texture(int tile, uint32_t texture_id) {
     glBindTexture(GL_TEXTURE_2D, texture_id);
 }
 /* Used for rescaling textures ROUGHLY into pow2 dims */
-static unsigned int __attribute__((aligned(16))) scaled[256 * 256 * sizeof(unsigned int)]; /* 16kb */
+static unsigned int __attribute__((aligned(16))) scaled[64 * 64 * sizeof(unsigned int)]; /* 16kb */
 
-static inline void *gfx_opengl_scale_texture(const uint8_t *data, const int w, const int h, const int to_w, const int to_h) {
-    resample_32bit((const uint32_t *)data, w, h, (uint32_t*)scaled, to_w, to_h);
-    return scaled;
-}
-
-static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int height) {
+//extern uint32_t pvr_mem_available(void);
+static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int height, unsigned int type) {
     if (!gl_npot) {
         // we don't support non power of two textures, scale to next power of two if necessary
-        if (!is_pot(width) || !is_pot(height)) {
+        if ((!is_pot(width) || !is_pot(height)) || (width < 8) || (height < 8)) {
             int pwidth = next_pot(width);
             int pheight = next_pot(height);
             /*@Note: Might not need texture max sizes */
-            if(pwidth > 32){
-                pwidth = 32;
+            if(pwidth > 256){
+                pwidth = 256;
             }
-            if(pheight > 32){
-                pheight = 32;
+            if(pheight > 256){
+                pheight = 256;
             }
 
             /* Need texture min sizes */
@@ -367,13 +385,24 @@ static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int 
             if(pheight < 8){
                 pheight = 8;
             }
-            rgba32_buf = gfx_opengl_scale_texture(rgba32_buf, width, height, pwidth, pheight);
+            if(type == GL_RGBA){
+                resample_32bit((const uint32_t *)rgba32_buf, width, height, (uint32_t*)scaled, pwidth, pheight);
+            } else {
+                resample_16bit((const uint16_t *)rgba32_buf, width, height, (uint16_t*)scaled, pwidth, pheight);
+            }
+            rgba32_buf = (uint8_t*)scaled;
             width = pwidth;
             height = pheight;
         }
     }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba32_buf);
+    if(type == GL_RGBA){
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba32_buf);
+    } else {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV, rgba32_buf);
+    }
+#ifdef DEBUG
+    printf("GL Mem left:%u\n", (unsigned int)pvr_mem_available());
+#endif
 }
 
 static inline GLenum gfx_cm_to_opengl(uint32_t val) {
@@ -568,7 +597,7 @@ static void gfx_opengl_init(void) {
     config.autosort_enabled = GL_TRUE;
     config.fsaa_enabled = GL_FALSE;
     /*@Note: These should be adjusted at some point */
-    config.initial_op_capacity = 4096;
+    config.initial_op_capacity = 3072;
     config.initial_pt_capacity = 1024;
     config.initial_tr_capacity = 2048;
     config.initial_immediate_capacity = 0;
