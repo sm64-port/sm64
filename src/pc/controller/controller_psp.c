@@ -36,8 +36,8 @@ static void controller_psp_read(OSContPad *pad) {
     uint32_t magnitude_sq = (uint32_t)(stickH * stickH) + (uint32_t)(stickV * stickV);
 
     if (magnitude_sq > (uint32_t)(configDeadzone * configDeadzone)) {
-        pad->stick_x = stickH;
-        pad->stick_y = stickV;
+        pad->stick_x = ((float)stickH/127)*80;
+        pad->stick_y = ((float)stickV/127)*80;
     }
 
     if (data.Buttons & configKeyStart)
