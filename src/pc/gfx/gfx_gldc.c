@@ -314,7 +314,9 @@ static struct ShaderProgram *gfx_opengl_create_and_load_new_shader(uint32_t shad
 }
 
 static struct ShaderProgram *gfx_opengl_lookup_shader(uint32_t shader_id) {
-    for (size_t i = 0; i < shader_program_pool_size; i++)
+    size_t i;
+
+    for (i = 0; i < shader_program_pool_size; i++)
         if (shader_program_pool[i].shader_id == shader_id)
             return &shader_program_pool[i];
     return NULL;
@@ -604,7 +606,7 @@ static void gfx_opengl_init(void) {
     glDisable(GL_CULL_FACE);
     // glDisable(GL_DITHER);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    //glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glEnableClientState(GL_VERTEX_ARRAY);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     /*@Note: unsure */

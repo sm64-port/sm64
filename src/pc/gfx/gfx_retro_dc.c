@@ -215,17 +215,19 @@ static void gfx_generate_cc(struct ColorCombiner *comb, uint32_t cc_id) {
     uint8_t c[2][4];
     uint32_t shader_id = (cc_id >> 24) << 24;
     uint8_t shader_input_mapping[2][4] = {{0}};
-    for (int i = 0; i < 4; i++) {
+    int i, j;
+
+    for (i = 0; i < 4; i++) {
         c[0][i] = (cc_id >> (i * 3)) & 7;
         c[1][i] = (cc_id >> (12 + i * 3)) & 7;
     }
-    for (int i = 0; i < 2; i++) {
+    for (i = 0; i < 2; i++) {
         if (c[i][0] == c[i][1] || c[i][2] == CC_0) {
             c[i][0] = c[i][1] = c[i][2] = 0;
         }
         uint8_t input_number[8] = {0};
         int next_input_number = SHADER_INPUT_1;
-        for (int j = 0; j < 4; j++) {
+        for (j = 0; j < 4; j++) {
             int val = 0;
             switch (c[i][j]) {
                 case CC_0:
@@ -259,12 +261,14 @@ static void gfx_generate_cc(struct ColorCombiner *comb, uint32_t cc_id) {
 }
 
 static struct ColorCombiner *gfx_lookup_or_create_color_combiner(uint32_t cc_id) {
+    size_t i;
+
     static struct ColorCombiner *prev_combiner;
     if (prev_combiner != NULL && prev_combiner->cc_id == cc_id) {
         return prev_combiner;
     }
     
-    for (size_t i = 0; i < color_combiner_pool_size; i++) {
+    for (i = 0; i < color_combiner_pool_size; i++) {
         if (color_combiner_pool[i].cc_id == cc_id) {
             return prev_combiner = &color_combiner_pool[i];
         }
@@ -339,8 +343,8 @@ static void import_texture_rgba32(int tile) {
 
 static void import_texture_ia4(int tile) {
     uint8_t rgba32_buf[32768];
-    
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
+    uint32_t i;
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
         uint8_t byte = rdp.loaded_texture[tile].addr[i / 2];
         uint8_t part = (byte >> (4 - (i % 2) * 4)) & 0xf;
         uint8_t intensity = part >> 1;
@@ -362,8 +366,8 @@ static void import_texture_ia4(int tile) {
 
 static void import_texture_ia8(int tile) {
     uint8_t rgba32_buf[16384];
-    
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes; i++) {
+    uint32_t i;
+    for (i = 0;  i < rdp.loaded_texture[tile].size_bytes; i++) {
         uint8_t intensity = rdp.loaded_texture[tile].addr[i] >> 4;
         uint8_t alpha = rdp.loaded_texture[tile].addr[i] & 0xf;
         uint8_t r = intensity;
@@ -383,8 +387,9 @@ static void import_texture_ia8(int tile) {
 
 static void import_texture_ia16(int tile) {
     uint8_t rgba32_buf[8192];
-    
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes / 2; i++) {
+    uint32_t i;
+
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes / 2; i++) {
         uint8_t intensity = rdp.loaded_texture[tile].addr[2 * i];
         uint8_t alpha = rdp.loaded_texture[tile].addr[2 * i + 1];
         uint8_t r = intensity;
@@ -404,8 +409,9 @@ static void import_texture_ia16(int tile) {
 
 static void import_texture_i4(int tile) {
     uint8_t rgba32_buf[32768];
+    uint32_t i;
 
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
         uint8_t byte = rdp.loaded_texture[tile].addr[i / 2];
         uint8_t part = (byte >> (4 - (i % 2) * 4)) & 0xf;
         uint8_t intensity = part;
@@ -426,8 +432,9 @@ static void import_texture_i4(int tile) {
 
 static void import_texture_i8(int tile) {
     uint8_t rgba32_buf[16384];
+    uint32_t i;
 
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes; i++) {
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes; i++) {
         uint8_t intensity = rdp.loaded_texture[tile].addr[i];
         uint8_t r = intensity;
         uint8_t g = intensity;
@@ -447,8 +454,9 @@ static void import_texture_i8(int tile) {
 
 static void import_texture_ci4(int tile) {
     uint8_t rgba32_buf[32768];
-    
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
+    uint32_t i;
+
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes * 2; i++) {
         uint8_t byte = rdp.loaded_texture[tile].addr[i / 2];
         uint8_t idx = (byte >> (4 - (i % 2) * 4)) & 0xf;
         uint16_t col16 = (rdp.palette[idx * 2] << 8) | rdp.palette[idx * 2 + 1]; // Big endian load
@@ -470,8 +478,9 @@ static void import_texture_ci4(int tile) {
 
 static void import_texture_ci8(int tile) {
     uint8_t rgba32_buf[16384];
-    
-    for (uint32_t i = 0; i < rdp.loaded_texture[tile].size_bytes; i++) {
+    uint32_t i;
+
+    for (i = 0; i < rdp.loaded_texture[tile].size_bytes; i++) {
         uint8_t idx = rdp.loaded_texture[tile].addr[i];
         uint16_t col16 = (rdp.palette[idx * 2] << 8) | rdp.palette[idx * 2 + 1]; // Big endian load
         uint8_t a = col16 & 1;
@@ -565,8 +574,10 @@ static void calculate_normal_dir(const Light_t *light, float coeffs[3]) {
 
 static void gfx_matrix_mul(float res[4][4], const float a[4][4], const float b[4][4]) {
     float tmp[4][4];
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
+    int i,j;
+
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
             tmp[i][j] = a[i][0] * b[0][j] +
                         a[i][1] * b[1][j] +
                         a[i][2] * b[2][j] +
@@ -579,9 +590,10 @@ static void gfx_matrix_mul(float res[4][4], const float a[4][4], const float b[4
 static void gfx_sp_matrix(uint8_t parameters, const int32_t *addr) {
     float matrix[4][4] __attribute__((aligned(16)));
 #ifndef GBI_FLOATS
+    int i, j;
     // Original GBI where fixed point matrices are used
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j += 2) {
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j += 2) {
             int32_t int_part = addr[i * 2 + j / 2];
             uint32_t frac_part = addr[8 + i * 2 + j / 2];
             matrix[i][j] = (int32_t)((int_part & 0xffff0000) | (frac_part >> 16)) / 65536.0f;
@@ -636,7 +648,9 @@ static float gfx_adjust_x_for_aspect_ratio(float x) {
 }
 
 static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *vertices) {
-    for (size_t i = 0; i < n_vertices; i++, dest_index++) {
+    size_t i;
+
+    for (i = 0; i < n_vertices; i++, dest_index++) {
         const Vtx_t *v = &vertices[i].v;
         const Vtx_tn *vn = &vertices[i].n;
         struct LoadedVertex *d = &rsp.loaded_vertices[dest_index];
@@ -653,7 +667,8 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
         
         if (rsp.geometry_mode & G_LIGHTING) {
             if (rsp.lights_changed) {
-                for (int i = 0; i < rsp.current_num_lights - 1; i++) {
+                int i;
+                for (i = 0; i < rsp.current_num_lights - 1; i++) {
                     calculate_normal_dir(&rsp.current_lights[i], rsp.current_lights_coeffs[i]);
                 }
                 static const Light_t lookat_x = {{0, 0, 0}, 0, {0, 0, 0}, 0, {127, 0, 0}, 0};
@@ -666,8 +681,9 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx *verti
             int r = rsp.current_lights[rsp.current_num_lights - 1].col[0];
             int g = rsp.current_lights[rsp.current_num_lights - 1].col[1];
             int b = rsp.current_lights[rsp.current_num_lights - 1].col[2];
-            
-            for (int i = 0; i < rsp.current_num_lights - 1; i++) {
+            int i;
+
+            for (i = 0; i < rsp.current_num_lights - 1; i++) {
                 float intensity = 0;
                 intensity += vn->n[0] * rsp.current_lights_coeffs[i][0];
                 intensity += vn->n[1] * rsp.current_lights_coeffs[i][1];
@@ -860,8 +876,9 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     uint8_t num_inputs;
     bool used_textures[2];
     gfx_rapi->shader_get_info(prg, &num_inputs, used_textures);
+    int i;
 
-    for (int i = 0; i < 2; i++) {
+    for (i = 0; i < 2; i++) {
         if (used_textures[i]) {
             if (rdp.textures_changed[i]) {
                 gfx_flush();
@@ -882,8 +899,8 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     bool use_texture = used_textures[0] || used_textures[1];
     uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
     uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
-    
-    for (int i = 0; i < 3; i++) {
+
+    for (i = 0; i < 3; i++) {
         buf_vbo[buf_vbo_len++] = v_arr[i]->x;
         buf_vbo[buf_vbo_len++] = v_arr[i]->y;
         buf_vbo[buf_vbo_len++] = v_arr[i]->z;
@@ -912,9 +929,11 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
         struct RGBA white = (struct RGBA){0xff, 0xff, 0xff, 0xff};
         struct RGBA *color = &white;
         struct RGBA tmp;
-        for (int j = 0; j < num_inputs; j++) {
+        int j, k;
+
+        for (j = 0; j < num_inputs; j++) {
             /*@Note: use_alpha ? 1 : 0 */
-            for (int k = 0; k < 1 + (use_alpha ? 0 : 0); k++) {
+            for (k = 0; k < 1 + (use_alpha ? 0 : 0); k++) {
                 switch (comb->shader_input_mapping[k][j]) {
                     case CC_PRIM:
                         color = &rdp.prim_color;
@@ -1411,6 +1430,8 @@ static void gfx_dp_texture_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int3
 }
 
 static void gfx_dp_fill_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t lry) {
+    int i;
+
     if (rdp.color_image_address == rdp.z_buf_address) {
         // Don't clear Z buffer here since we already did it with glClear
         return;
@@ -1423,7 +1444,7 @@ static void gfx_dp_fill_rectangle(int32_t ulx, int32_t uly, int32_t lrx, int32_t
         lry += 1 << 2;
     }
     
-    for (int i = MAX_VERTICES; i < MAX_VERTICES + 4; i++) {
+    for (i = MAX_VERTICES; i < MAX_VERTICES + 4; i++) {
         struct LoadedVertex* v = &rsp.loaded_vertices[i];
         v->color = rdp.fill_color;
     }
@@ -1675,6 +1696,8 @@ void gfx_get_dimensions(uint32_t *width, uint32_t *height) {
 }
 
 void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, const char *game_name, bool start_in_fullscreen) {
+    size_t i;
+
     gfx_wapi = wapi;
     gfx_rapi = rapi;
     gfx_wapi->init(game_name, start_in_fullscreen);
@@ -1709,7 +1732,7 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
         0x0920038d,
         0x09200045
     };
-    for (size_t i = 0; i < sizeof(precomp_shaders) / sizeof(uint32_t); i++) {
+    for (i = 0; i < sizeof(precomp_shaders) / sizeof(uint32_t); i++) {
         gfx_lookup_or_create_shader_program(precomp_shaders[i]);
     }
     gfx_wapi->get_dimensions(&gfx_current_dimensions.width, &gfx_current_dimensions.height);
