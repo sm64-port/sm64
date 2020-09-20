@@ -1,5 +1,4 @@
-#define TARGET_SCEGU 1
-#if defined(TARGET_SCEGU) && defined(TARGET_PSP)
+#if defined(TARGET_PSP)
 
 #include <stdint.h>
 #include <stdlib.h>

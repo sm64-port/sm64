@@ -58,7 +58,7 @@ static int audio_psp_get_desired_buffered(void) {
     return 1100;
 }
 
-static void audio_psp_play(const uint8_t *buf, size_t len) {
+void audio_psp_play(const uint8_t *buf, size_t len) {
     int new_samples = len / (sizeof(short) * PSP_AUDIO_CHANNELS);
 
     sceKernelDcacheInvalidateRange(buf, len);

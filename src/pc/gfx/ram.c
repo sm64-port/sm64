@@ -67,7 +67,7 @@ void getRamStatus(void) {
     printf("Total Ram: %lu, Free Ram: %lu, Need: %d,  Used Ram: %lu\n",
            getSystemRam(),
            getFreeRam(),
-           3145728 - (int) getFreeRam(),
+           2200000 - (int) getFreeRam(),
            getUsedRam());
 }
 #endif

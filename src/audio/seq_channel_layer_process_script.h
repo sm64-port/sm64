@@ -18,7 +18,7 @@
 #define PORTAMENTO_MODE_4 4
 #define PORTAMENTO_MODE_5 5
 
-#define COPT 0
+#define COPT 1
 #if COPT
 #define M64_READ_U8(state, dst) \
     dst = m64_read_u8(state);
@@ -271,13 +271,16 @@ void seq_channel_layer_process_script(struct SequenceChannelLayer *layer) {
             case 0xc4: // layer_somethingon
             case 0xc5: // layer_somethingoff
                 //! copt needs a ternary:
-                //layer->continuousNotes = (cmd == 0xc4) ? TRUE : FALSE;
+                #if COPT
                 if (cmd == 0xc4) {
                     temp8 = TRUE;
                 } else {
                     temp8 = FALSE;
                 }
                 layer->continuousNotes = temp8;
+                #else 
+                layer->continuousNotes = (cmd == 0xc4) ? TRUE : FALSE;
+                #endif
                 seq_channel_layer_note_decay(layer);
                 break;
 
@@ -427,12 +430,15 @@ l1090:
 
                     if (layer->portamento.mode != 0) {
                         //! copt needs a ternary:
-                        //usedSemitone = (layer->portamentoTargetNote < SEMITONE) ? SEMITONE : layer->portamentoTargetNote;
+                        #if COPT
                         if (layer->portamentoTargetNote < SEMITONE) {
                             USED_SEMITONE = SEMITONE;
                         } else {
                             USED_SEMITONE = layer->portamentoTargetNote;
                         }
+                        #else
+                        usedSemitone = (layer->portamentoTargetNote < SEMITONE) ? SEMITONE : layer->portamentoTargetNote;
+                        #endif
 
                         if (instrument != NULL) {
                             sound = (u8) USED_SEMITONE < instrument->normalRangeLo ? &instrument->lowNotesSound

@@ -17,7 +17,7 @@
 
 void seq_channel_layer_process_script(struct SequenceChannelLayer *layer);
 void sequence_channel_process_script(struct SequenceChannel *seqChannel);
-u8 get_instrument(struct SequenceChannel *seqChannel, u8 instId, struct Instrument **instOut,
+static u8 get_instrument(struct SequenceChannel *seqChannel, u8 instId, struct Instrument **instOut,
                   struct AdsrSettings *adsr);
 
 void sequence_channel_init(struct SequenceChannel *seqChannel) {
@@ -146,7 +146,7 @@ void seq_channel_layer_free(struct SequenceChannel *seqChannel, s32 layerIndex) 
         audio_list_push_back(&gLayerFreeList, &layer->listItem);
 #else
         struct AudioListItem *item = &layer->listItem;
-        if (item->prev == NULL) {
+        if ((item) && (item->prev == NULL)) {
             gLayerFreeList.prev->next = item;
             item->prev = gLayerFreeList.prev;
             item->next = &gLayerFreeList;
@@ -353,7 +353,7 @@ void init_layer_freelist(void) {
     }
 }
 
-u8 m64_read_u8(struct M64ScriptState *state) {
+static inline u8 m64_read_u8(struct M64ScriptState *state) {
 #ifdef VERSION_EU
     return *(state->pc++);
 #else
@@ -362,13 +362,13 @@ u8 m64_read_u8(struct M64ScriptState *state) {
 #endif
 }
 
-s16 m64_read_s16(struct M64ScriptState *state) {
+static inline s16 m64_read_s16(struct M64ScriptState *state) {
     s16 ret = *(state->pc++) << 8;
     ret = *(state->pc++) | ret;
     return ret;
 }
 
-u16 m64_read_compressed_u16(struct M64ScriptState *state) {
+static inline u16 m64_read_compressed_u16(struct M64ScriptState *state) {
     u16 ret = *(state->pc++);
     if (ret & 0x80) {
         ret = (ret << 8) & 0x7f00;
@@ -996,7 +996,7 @@ void sequence_channel_process_script(struct SequenceChannel *seqChannel) {
     u8 cmd;    // v1, s1
     u8 loBits; // t0, a0
     s32 offset;
-    s8 value = 0; // sp53, 4b
+    s8 value; // sp53, 4b
     u8 temp;
     s8 tempSigned;
     UNUSED u8 temp2;
@@ -1544,7 +1544,7 @@ void sequence_player_process_sequence(struct SequencePlayer *seqPlayer) {
     u8 cmd;
     u8 loBits;
     u8 temp;
-    s32 value = 0;
+    s32 value;
     s32 i;
     u16 u16v;
     u8 *tempPtr;

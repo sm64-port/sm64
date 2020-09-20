@@ -109,6 +109,7 @@ typedef int JobData;
 
 static s16 audio_buffer[SAMPLES_HIGH * 2 * 2] __attribute__((aligned(64)));
 extern struct Stack* stack;
+extern void audio_psp_play(const uint8_t *buf, size_t len);
 
 int __attribute__((optimize("O0"))) run_me_audio(JobData data) {
     (void)data;
@@ -189,7 +190,6 @@ int audioOutput(SceSize args, void *argp) {
 #endif
 
 extern int gProcessAudio;
-int gFrame=0;
 void produce_one_frame(void) {
 #if defined(TARGET_PSP)
     /* Generate sound */
@@ -199,7 +199,7 @@ void produce_one_frame(void) {
     gfx_start_frame();
     game_loop_one_iteration();
 
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
     int samples_left = audio_api->buffered();
     u32 num_audio_samples = samples_left < audio_api->get_desired_buffered() ? SAMPLES_HIGH : SAMPLES_LOW;
     //printf("Audio samples: %d %u\n", samples_left, num_audio_samples);
@@ -214,7 +214,9 @@ void produce_one_frame(void) {
     //printf("Audio samples before submitting: %d\n", audio_api->buffered());
     audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
 #endif
-    //create_next_audio_buffer(NULL, SAMPLES_HIGH);
+#if defined(TARGET_DC)
+    create_next_audio_buffer(NULL, SAMPLES_HIGH);
+#endif
 
     gfx_end_frame();
 }
