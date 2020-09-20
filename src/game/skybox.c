@@ -10,7 +10,8 @@
 #include "segment2.h"
 #include "sm64.h"
 
-#if !defined(TARGET_N64) && !defined(TARGET_DC)
+#if !defined(TARGET_N64)
+// && !defined(TARGET_DC)
 #define BETTER_SKYBOX_POSITION_PRECISION
 #endif
 
