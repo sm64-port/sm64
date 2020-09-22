@@ -609,7 +609,7 @@ static void gfx_scegu_set_depth_test(bool depth_test) {
 }
 
 static void gfx_scegu_set_depth_mask(bool z_upd) {
-    sceGuDepthMask(z_upd ? GU_FALSE : GU_TRUE);
+    sceGuDepthMask(!z_upd);
 }
 
 static void gfx_scegu_set_zmode_decal(bool zmode_decal) {

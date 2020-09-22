@@ -86,7 +86,7 @@ static size_t cur_buf_size = 0;
 static size_t cur_buf_num_tris = 0;
 static size_t cur_buf_stride = 0;
 static bool gl_blend = false;
-
+static bool gl_depth = false;
 static bool gl_npot = false;
 
 #if !defined(TARGET_DC)
@@ -441,7 +441,8 @@ static void gfx_opengl_set_depth_test(bool depth_test) {
 }
 
 static void gfx_opengl_set_depth_mask(bool z_upd) {
-    glDepthMask(z_upd ? GL_TRUE : GL_FALSE);
+    gl_depth = z_upd;
+    glDepthMask(z_upd);
 }
 
 static void gfx_opengl_set_zmode_decal(bool zmode_decal) {
@@ -537,7 +538,15 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
         glDisable(GL_BLEND);
     }
 
+    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
+        //glDepthMask(false);
+    }
+
     glDrawArrays(GL_TRIANGLES, 0, 3 * cur_buf_num_tris);
+
+    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
+        //glDepthMask(true);
+    }
 
     // if there's two textures, draw polys with the second texture
     //if (cur_shader->texture_used[1]) gfx_opengl_pass_mix_texture();
