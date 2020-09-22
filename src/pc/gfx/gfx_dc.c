@@ -17,7 +17,6 @@ static unsigned int last_time = 0;
 
 extern void glKosSwapBuffers(void);
 extern uint64_t timer_ms_gettime64(void);
-extern void timer_spin_sleep(unsigned int ms);
 
 unsigned int GetSystemTimeLow(void) {
     uint64_t msec = timer_ms_gettime64();
@@ -25,7 +24,7 @@ unsigned int GetSystemTimeLow(void) {
 }
 
 void DelayThread(unsigned int ms) {
-    timer_spin_sleep(ms);
+    thd_sleep(ms);
 }
 
 //-----------------------------------------------------------------------------
@@ -103,7 +102,7 @@ static void gfx_dc_handle_events(void) {
 
 float cpu_time = 0.f, gpu_time = 0.f;
 uint8_t skip_debounce = 0;
-const unsigned int FRAME_TIME_MS = 33; // hopefully get right on target @ 33.3
+const unsigned int FRAME_TIME_MS = 30; // hopefully get right on target @ 33.3
 
 static bool gfx_dc_start_frame(void) {
     const unsigned int cur_time = GetSystemTimeLow();
@@ -123,6 +122,9 @@ static bool gfx_dc_start_frame(void) {
 }
 
 static void gfx_dc_swap_buffers_begin(void) {
+}
+
+static void gfx_dc_swap_buffers_end(void) {
     // Number of microseconds a frame should take (30 fps)
     const unsigned int cur_time = GetSystemTimeLow();
     const unsigned int elapsed = cur_time - last_time;
@@ -135,11 +137,8 @@ static void gfx_dc_swap_buffers_begin(void) {
         DelayThread(FRAME_TIME_MS - elapsed);
         last_time += (FRAME_TIME_MS - elapsed);
     }
-}
 
-static void gfx_dc_swap_buffers_end(void) {
     /* Lets us yield to other threads*/
-    // DelayThread(100);
     glKosSwapBuffers();
 }
 

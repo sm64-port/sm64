@@ -543,8 +543,8 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := -DTARGET_DC -D_arch_dreamcast -DNDEBUG -ffunction-sections -fdata-sections -Isrc/pc/gfx/gldc -Wall -Wextra -std=c99
-  PLATFORM_LDFLAGS := -Wl,--gc-sections
+  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -DTARGET_DC -DNDEBUG -Isrc/pc/gfx/gldc -Wall -Wextra -g0
+  PLATFORM_LDFLAGS := -Wl,--gc-sections  -Wl,-Map=output.map
 endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
@@ -573,7 +573,8 @@ ifeq ($(ENABLE_OPENGL),1)
     GFX_LDFLAGS += -L$(PSPSDK_PREFIX)/lib src/pc/libME.a src/pc/gfx/libpspmath.a -lpspdebug  -lpspgu -lpspvfpu -lpspctrl -lpspge -lpspdisplay -lpsphprm -lm -lpspsdk -lpsprtc -lpspaudio -lpsputility -lpspnet_inet -lpsppower -lc -lpspuser -lpspvram  
   endif
   ifeq ($(TARGET_DC),1)
-    GFX_LDFLAGS += src/pc/gfx/gldc/libGLdc.a -lm
+    GFX_CFLAGS  += -Isrc/pc/audio/aldc2
+    GFX_LDFLAGS += src/pc/gfx/gldc/libGLdc.a src/pc/audio/aldc2/libAL.a -lm
   endif
 endif
 ifeq ($(ENABLE_DX11),1)

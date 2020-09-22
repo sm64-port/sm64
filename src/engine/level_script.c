@@ -285,8 +285,15 @@ static void level_cmd_load_mario_head(void) {
     void *addr = main_pool_alloc(DOUBLE_SIZE_ON_64_BIT(0xE1000), MEMORY_POOL_LEFT);
     if (addr != NULL) {
         gdm_init(addr, DOUBLE_SIZE_ON_64_BIT(0xE1000));
+#if !defined(TARGET_DC)
+#if defined(TARGET_N64)
         gd_add_to_heap(gZBuffer, sizeof(gZBuffer)); // 0x25800
-        gd_add_to_heap(gFrameBuffer0, 3 * sizeof(gFrameBuffer0)); // 0x70800
+#endif
+        gd_add_to_heap(gFrameBuffer0, 3 * sizeof(gFrameBuffer0)); // 0x70800, 460800 0x10c80
+#else
+        extern void *main_pc_pool_gd;
+        gd_add_to_heap(main_pc_pool_gd, 0x70800);
+#endif
         gdm_setup();
         gdm_maketestdl(CMD_GET(s16, 2));
     } else {

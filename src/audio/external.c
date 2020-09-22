@@ -875,13 +875,8 @@ void create_next_audio_buffer(s16 *samples, u32 num_samples) {
         update_game_sound();
         sGameLoopTicked = 0;
     }
-#if !defined(TARGET_DC)
     s32 writtenCmds;
     synthesis_execute(gAudioCmdBuffers[0], &writtenCmds, samples, num_samples);
-#else 
-    (void)samples;
-    (void)num_samples;
-#endif
     gAudioRandom = ((gAudioRandom + gAudioFrameCount) * gAudioFrameCount);
     decrease_sample_dma_ttls();
 }

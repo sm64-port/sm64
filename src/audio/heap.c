@@ -53,8 +53,6 @@ u8 gAudioResetPresetIdToLoad;
 s32 gAudioResetFadeOutFramesLeft;
 #endif
 
-u8 gAudioUnusedBuffer[0x1000];
-
 extern s32 gMaxAudioCmds;
 
 #ifdef VERSION_EU

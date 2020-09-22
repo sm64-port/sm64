@@ -8,11 +8,12 @@ ALIGNED16 u8 gAudioHeap[DOUBLE_SIZE_ON_64_BIT(0x31200) - 0x3800];
 #else
 ALIGNED16 u8 gAudioHeap[DOUBLE_SIZE_ON_64_BIT(0x31200)];
 #endif
-
+#if defined(TARGET_N64)
 ALIGNED8 u8 gIdleThreadStack[0x800];
 ALIGNED8 u8 gThread3Stack[0x2000];
 ALIGNED8 u8 gThread4Stack[0x2000];
 ALIGNED8 u8 gThread5Stack[0x2000];
+#endif
 #ifdef VERSION_SH
 ALIGNED8 u8 gThread6Stack[0x2000];
 #endif
@@ -32,8 +33,10 @@ struct GfxPool gGfxPools[GFX_NUM_POOLS];
 ALIGNED8 u8 gAudioSPTaskYieldBuffer[OS_YIELD_AUDIO_SIZE];
 #endif
 
+#if defined(TARGET_N64)
 // Probably Thread 2 stack space. Unreferenced, and stubbed out with f3dex to
 // avoid an overflowing .buffers segment.
 #if !defined(F3DEX_GBI_SHARED) && !defined(VERSION_EU)
 ALIGNED8 u8 gUnusedThread2Stack[0x1400];
+#endif
 #endif
