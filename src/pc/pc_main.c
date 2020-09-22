@@ -215,7 +215,7 @@ void produce_one_frame(void) {
     audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
 #endif
 #if defined(TARGET_DC)
-    create_next_audio_buffer(NULL, SAMPLES_HIGH);
+    audio_api->play(NULL, 2 /* 2 buffers */ * SAMPLES_HIGH * sizeof(short) * 2 /* stereo */);
 #endif
 
     gfx_end_frame();
@@ -262,8 +262,18 @@ static void on_fullscreen_changed(bool is_now_fullscreen) {
     configFullscreen = is_now_fullscreen;
 }
 
+#if defined(TARGET_DC)
+void *main_pc_pool = NULL;
+void *main_pc_pool_gd = NULL;
+#endif
 void main_func(void) {
-    static u32 pool[0x165000/8 / 4 * sizeof(void *) * 4];
+#if !defined(TARGET_DC)
+    static u32 pool[0x165000/8 / 4 * sizeof(void *) * 2];
+#else
+    static u8 pool[0x165000+0x70800];
+    main_pc_pool = &pool;
+    main_pc_pool_gd = &pool[0x165000];
+#endif
     main_pool_init(pool, pool + sizeof(pool) / sizeof(pool[0]));
     gEffectsMemoryPool = mem_pool_init(0x4000, MEMORY_POOL_LEFT);
 

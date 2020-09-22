@@ -37,8 +37,10 @@ OSMesgQueue D_80339CB8;
 OSMesg D_80339CD0;
 OSMesg D_80339CD4;
 struct VblankHandler gGameVblankHandler;
+#if !defined(TARGET_DC)
 uintptr_t gPhysicalFrameBuffers[3];
 uintptr_t gPhysicalZBuffer;
+#endif
 void *D_80339CF0;
 void *D_80339CF4;
 struct MarioAnimation D_80339D10;
@@ -196,6 +198,7 @@ void my_rsp_init(void) {
 
 /** Clear the Z buffer. */
 void clear_z_buffer(void) {
+#if defined(TARGET_N64)
     gDPPipeSync(gDisplayListHead++);
 
     gDPSetDepthSource(gDisplayListHead++, G_ZS_PIXEL);
@@ -207,10 +210,12 @@ void clear_z_buffer(void) {
 
     gDPFillRectangle(gDisplayListHead++, 0, BORDER_HEIGHT, SCREEN_WIDTH - 1,
                      SCREEN_HEIGHT - 1 - BORDER_HEIGHT);
+#endif
 }
 
 /** Sets up the final framebuffer image. */
 void display_frame_buffer(void) {
+#if defined(TARGET_N64)
     gDPPipeSync(gDisplayListHead++);
 
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
@@ -218,10 +223,12 @@ void display_frame_buffer(void) {
                      gPhysicalFrameBuffers[frameBufferIndex]);
     gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, BORDER_HEIGHT, SCREEN_WIDTH,
                   SCREEN_HEIGHT - BORDER_HEIGHT);
+#endif
 }
 
 /** Clears the framebuffer, allowing it to be overwritten. */
 void clear_frame_buffer(s32 color) {
+#if defined(TARGET_N64)
     gDPPipeSync(gDisplayListHead++);
 
     gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
@@ -235,10 +242,14 @@ void clear_frame_buffer(s32 color) {
     gDPPipeSync(gDisplayListHead++);
 
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+#else
+    (void)color;
+#endif
 }
 
 /** Clears and initializes the viewport. */
 void clear_viewport(Vp *viewport, s32 color) {
+#if defined(TARGET_N64)
     s16 vpUlx = (viewport->vp.vtrans[0] - viewport->vp.vscale[0]) / 4 + 1;
     s16 vpUly = (viewport->vp.vtrans[1] - viewport->vp.vscale[1]) / 4 + 1;
     s16 vpLrx = (viewport->vp.vtrans[0] + viewport->vp.vscale[0]) / 4 - 2;
@@ -260,6 +271,10 @@ void clear_viewport(Vp *viewport, s32 color) {
     gDPPipeSync(gDisplayListHead++);
 
     gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+#else
+    (void)viewport;
+    (void)color;
+#endif
 }
 
 /** Draws the horizontal screen borders */
@@ -344,6 +359,7 @@ void end_master_display_list(void) {
 }
 
 void draw_reset_bars(void) {
+#if !defined(TARGET_DC)
     s32 sp24;
     s32 sp20;
     s32 fbNum;
@@ -369,6 +385,7 @@ void draw_reset_bars(void) {
     osWritebackDCacheAll();
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
+#endif
 }
 
 void rendering_init(void) {
@@ -405,7 +422,9 @@ void display_and_vsync(void) {
     send_display_list(&gGfxPool->spTask);
     profiler_log_thread5_time(AFTER_DISPLAY_LISTS);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
+#if !defined(TARGET_DC)
     osViSwapBuffer((void *) PHYSICAL_TO_VIRTUAL(gPhysicalFrameBuffers[sCurrFBNum]));
+#endif
     profiler_log_thread5_time(THREAD5_END);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
     if (++sCurrFBNum == 3) {
@@ -614,10 +633,12 @@ void setup_game_memory(void) {
     set_segment_base_addr(0, (void *) 0x80000000);
     osCreateMesgQueue(&D_80339CB8, &D_80339CD4, 1);
     osCreateMesgQueue(&gGameVblankQueue, &D_80339CD0, 1);
-    gPhysicalZBuffer = VIRTUAL_TO_PHYSICAL(gZBuffer);
-    gPhysicalFrameBuffers[0] = VIRTUAL_TO_PHYSICAL(gFrameBuffer0);
-    gPhysicalFrameBuffers[1] = VIRTUAL_TO_PHYSICAL(gFrameBuffer1);
-    gPhysicalFrameBuffers[2] = VIRTUAL_TO_PHYSICAL(gFrameBuffer2);
+#if !defined(TARGET_DC)
+    //gPhysicalZBuffer = VIRTUAL_TO_PHYSICAL(gZBuffer);
+    //gPhysicalFrameBuffers[0] = VIRTUAL_TO_PHYSICAL(gFrameBuffer0);
+    //gPhysicalFrameBuffers[1] = VIRTUAL_TO_PHYSICAL(gFrameBuffer1);
+    //gPhysicalFrameBuffers[2] = VIRTUAL_TO_PHYSICAL(gFrameBuffer2);
+#endif
     D_80339CF0 = main_pool_alloc(0x4000, MEMORY_POOL_LEFT);
     set_segment_base_addr(17, (void *) D_80339CF0);
     func_80278A78(&D_80339D10, gMarioAnims, D_80339CF0);

@@ -10,8 +10,7 @@
 #include "segment2.h"
 #include "sm64.h"
 
-#if !defined(TARGET_N64)
-// && !defined(TARGET_DC)
+#if !defined(TARGET_N64) && !defined(TARGET_DC)
 #define BETTER_SKYBOX_POSITION_PRECISION
 #endif
 
@@ -271,6 +270,8 @@ void draw_skybox_tile_grid(Gfx **dlist, s8 background, s8 player, s8 colorIndex)
     }
 }
 
+//float ortho_z_near = -19.0f;
+//float ortho_z_far = 0.01f;
 void *create_skybox_ortho_matrix(s8 player) {
     f32 left = sSkyBoxInfo[player].scaledX;
     f32 right = sSkyBoxInfo[player].scaledX + SCREEN_WIDTH;
@@ -289,11 +290,11 @@ void *create_skybox_ortho_matrix(s8 player) {
 #endif
 
     if (mtx != NULL) {
-#if defined(TARGET_DC)
-        guOrtho(mtx, left, right, bottom, top, 0.0f, 1.0f, 1.0f);
-#else
+    #if defined(TARGET_DC)
+        guOrtho(mtx, left, right, bottom, top, -20.0f, 1.01f, 1.0f);
+    #else
         guOrtho(mtx, left, right, bottom, top, 0.0f, 3.0f, 1.0f);
-#endif
+    #endif
     } else {
     }
 

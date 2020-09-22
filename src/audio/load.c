@@ -97,12 +97,10 @@ s8 gAudioUpdatesPerFrame;
 extern u64 gAudioGlobalsStartMarker;
 extern u64 gAudioGlobalsEndMarker;
 
-#if !defined(TARGET_DC)
 extern u8 gSoundDataADSR[]; // sound_data.ctl
 extern u8 gSoundDataRaw[];  // sound_data.tbl
 extern u8 gMusicData[];     // sequences.s
 extern u8 gBankSetsData[];  // bank_sets.s
-#endif
 
 /**
  * Performs an immediate DMA copy
@@ -971,7 +969,6 @@ void audio_init() {
     audio_reset_session(&gAudioSessionPresets[0]);
 #endif
 
-#if !defined(TARGET_DC)
     // Load header for sequence data (assets/music_data.sbk.s)
     gSeqFileHeader = (ALSeqFile *) buf;
     data = gMusicData;
@@ -1010,11 +1007,6 @@ void audio_init() {
     // Load bank sets for each sequence (assets/bank_sets.s)
     gAlBankSets = soundAlloc(&gAudioInitPool, 0x100);
     audio_dma_copy_immediate((uintptr_t) gBankSetsData, gAlBankSets, 0x100);
-#else
-    (void)data;
-    (void)size;
-    (void)buf;
-#endif
 
     init_sequence_players();
     gAudioLoadLock = AUDIO_LOCK_NOT_LOADING;
