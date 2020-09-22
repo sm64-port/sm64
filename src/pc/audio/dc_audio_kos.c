@@ -15,6 +15,7 @@
 
 /* Double Buffer */
 snd_stream_hnd_t shnd = -1;
+extern int gProcessAudio;
 
 /* 0x12000 bytes */
 uint16_t snd_buffer_internal[DC_AUDIO_SAMPLES_DESIRED * DC_AUDIO_CHANNELS] __attribute__((aligned(64)));
@@ -76,9 +77,14 @@ static int audio_dc_get_desired_buffered(void) {
 
 static void audio_dc_play(const uint8_t *buf, size_t len) {
     void *snd_buf = snd_buffer_internal + audio_frames_generated_cur * (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
-    create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
-    snd_buf += (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
-    create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
+
+    if (gProcessAudio) {
+        create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
+        snd_buf += (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
+        create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
+    } else {
+        sq_clr(snd_buffer_internal, sizeof(snd_buffer_internal));
+    }
 
     audio_frames_generated_total += 2;
     audio_frames_generated_cur += 2;
