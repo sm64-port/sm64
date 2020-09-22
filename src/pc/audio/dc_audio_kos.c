@@ -11,18 +11,20 @@
 #define DC_AUDIO_GIVEN_BUFFERS (2)
 #define SAMPLES_HIGH (544)
 //#define DC_AUDIO_SAMPLES_DESIRED (SAMPLES_HIGH * DC_AUDIO_GIVEN_BUFFERS * 2 /* to help pad space */)
-#define DC_AUDIO_SAMPLES_DESIRED (0x10000 / 4)
+#define DC_AUDIO_SAMPLES_DESIRED (0x12000 / 4)
 
 /* Double Buffer */
 snd_stream_hnd_t shnd = -1;
 
-/* 0x10000 bytes */
+/* 0x12000 bytes */
 uint16_t snd_buffer_internal[DC_AUDIO_SAMPLES_DESIRED * DC_AUDIO_CHANNELS] __attribute__((aligned(64)));
-
+static int audio_frames_generated_total;
+static int audio_frames_generated_cur;
 
 void *audio_callback(UNUSED snd_stream_hnd_t hnd, int samples_requested, int *samples_returned) {
     int backup_req = samples_requested;
     void *snd_buf = snd_buffer_internal;
+#if 0
     do {
         //printf("left to generate %d/%d bytes\n", samples_requested, backup_req);
         create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
@@ -33,11 +35,13 @@ void *audio_callback(UNUSED snd_stream_hnd_t hnd, int samples_requested, int *sa
     snd_buf += (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
 
     //int ret = backup_req-samples_requested;
+#endif
     int ret = backup_req;
     *samples_returned = ret;
     void *buf = snd_buffer_internal;
     //printf("%s:%d asked for %d and gave %d @ %x with %d left \n", __func__, __LINE__, backup_req, ret, (unsigned int) buf, samples_requested);
     //fflush(stdout);
+    audio_frames_generated_cur = 0;
     return snd_buffer_internal;
 }
 
@@ -55,8 +59,9 @@ static bool audio_dc_init(void) {
         return false;
     }
 
-    //snd_stream_start(shnd, DC_AUDIO_FREQUENCY, DC_STEREO_AUDIO);
     memset(snd_buffer_internal, '\0', DC_AUDIO_SAMPLES_DESIRED * DC_AUDIO_CHANNELS * 2);
+    audio_frames_generated_total = 0;
+    audio_frames_generated_cur = 0;
     return true;
 }
 
@@ -70,13 +75,24 @@ static int audio_dc_get_desired_buffered(void) {
 }
 
 static void audio_dc_play(const uint8_t *buf, size_t len) {
+    void *snd_buf = snd_buffer_internal + audio_frames_generated_cur * (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
+    create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
+    snd_buf += (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
+    create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
+
+    audio_frames_generated_total += 2;
+    audio_frames_generated_cur += 2;
+
+    if (audio_frames_generated_total > 15) {
+        snd_stream_start(shnd, DC_AUDIO_FREQUENCY, DC_STEREO_AUDIO);
+    }
+
     int ret = snd_stream_poll(shnd);
     if (ret) {
         printf("SND: %d\n", ret);
         fflush(stdout);
     }
-    thd_sleep(1);
-    //thd_pass();
+    thd_pass();
 }
 
 struct AudioAPI audio_dc = {
