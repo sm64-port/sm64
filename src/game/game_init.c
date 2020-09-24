@@ -37,7 +37,7 @@ OSMesgQueue D_80339CB8;
 OSMesg D_80339CD0;
 OSMesg D_80339CD4;
 struct VblankHandler gGameVblankHandler;
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
 uintptr_t gPhysicalFrameBuffers[3];
 uintptr_t gPhysicalZBuffer;
 #endif
@@ -62,6 +62,8 @@ u16 gDemoInputListID = 0;
 struct DemoInput gRecordedDemoInput = { 0 }; // possibly removed in EU. TODO: Check
 
 #if defined(TARGET_PSP)
+#include <stdio.h>
+#include <psppower.h>
 #define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* psp tick rate obtained from sceRtcGetTickResolution() */
 #elif defined(TARGET_DC)
 #define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* Figure this out for dc */
@@ -113,11 +115,19 @@ static void render_fps(void) {
         extern void init_mediaengine(void);
         extern void kill_audiomanager(void);
         extern void init_audiomanager(void);
+        extern volatile s32 gAudioFrameCount;
+        extern s32 sGameLoopTicked;
+        gAudioFrameCount++;
+        if (sGameLoopTicked != 0) {
+            sGameLoopTicked = 0;
+        }
+        gAudioFrameCount++;
+        if (sGameLoopTicked != 0) {
+            sGameLoopTicked = 0;
+        }
         kill_audiomanager();
         init_mediaengine();
         init_audiomanager();
-        mediaengine_available = 0;
-        mediaengine_sound = 0;
 #endif
     }
 
@@ -359,7 +369,7 @@ void end_master_display_list(void) {
 }
 
 void draw_reset_bars(void) {
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
     s32 sp24;
     s32 sp20;
     s32 fbNum;
@@ -422,7 +432,7 @@ void display_and_vsync(void) {
     send_display_list(&gGfxPool->spTask);
     profiler_log_thread5_time(AFTER_DISPLAY_LISTS);
     osRecvMesg(&gGameVblankQueue, &D_80339BEC, OS_MESG_BLOCK);
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
     osViSwapBuffer((void *) PHYSICAL_TO_VIRTUAL(gPhysicalFrameBuffers[sCurrFBNum]));
 #endif
     profiler_log_thread5_time(THREAD5_END);
@@ -633,11 +643,11 @@ void setup_game_memory(void) {
     set_segment_base_addr(0, (void *) 0x80000000);
     osCreateMesgQueue(&D_80339CB8, &D_80339CD4, 1);
     osCreateMesgQueue(&gGameVblankQueue, &D_80339CD0, 1);
-#if !defined(TARGET_DC)
-    //gPhysicalZBuffer = VIRTUAL_TO_PHYSICAL(gZBuffer);
-    //gPhysicalFrameBuffers[0] = VIRTUAL_TO_PHYSICAL(gFrameBuffer0);
-    //gPhysicalFrameBuffers[1] = VIRTUAL_TO_PHYSICAL(gFrameBuffer1);
-    //gPhysicalFrameBuffers[2] = VIRTUAL_TO_PHYSICAL(gFrameBuffer2);
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
+    gPhysicalZBuffer = VIRTUAL_TO_PHYSICAL(gZBuffer);
+    gPhysicalFrameBuffers[0] = VIRTUAL_TO_PHYSICAL(gFrameBuffer0);
+    gPhysicalFrameBuffers[1] = VIRTUAL_TO_PHYSICAL(gFrameBuffer1);
+    gPhysicalFrameBuffers[2] = VIRTUAL_TO_PHYSICAL(gFrameBuffer2);
 #endif
     D_80339CF0 = main_pool_alloc(0x4000, MEMORY_POOL_LEFT);
     set_segment_base_addr(17, (void *) D_80339CF0);

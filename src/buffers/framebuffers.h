@@ -5,7 +5,7 @@
 
 #include "config.h"
 
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
 // level_script.c assumes that the frame buffers are adjacent, while game.c's
 // -g codegen implies that they are separate variables. This is impossible to
 // reconcile without undefined behavior. Avoid that when possible.
