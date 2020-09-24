@@ -15,6 +15,7 @@
 
 #include "../melib.h"
 #include "../psp_audio_stack.h"
+#include "sceGuDebugPrint.h"
 
 #define GFX_API_NAME "PSP - sceGU"
 #define SCR_WIDTH (480)
@@ -22,7 +23,7 @@
 
 static int force_30fps = 1;
 static unsigned int last_time = 0;
-int audio_manager_thid = 0; 
+int audio_manager_thid = 0;
 
 /* I forgot why we need this */
 void __assert_func(UNUSED const char *file, UNUSED int line, UNUSED const char *method, UNUSED const char *expression) {
@@ -38,6 +39,21 @@ char *stpcpy(char *__restrict__ dest, const char *__restrict__ src) {
 int isspace(int _c) {
     char c = (char) _c;
     return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
+
+/* Lets rewrite this and add a splash screen donated by z2442 */
+void psp_divert_slow_memory_card(void) {
+    int ms_to_wait = 3000;
+    char buf[64];
+
+    while (ms_to_wait > 0) {
+        sprintf(buf, "Launching in%1.2fs", ms_to_wait/1000.f);
+        sceGuDebugPrint(32, 32, 0xffffff, buf);
+        ms_to_wait -= 16;
+        sceGuSync(0, 0);
+        sceDisplayWaitVblankStart();
+        sceGuSwapBuffers();
+    }
 }
 
 static int exitCallback(UNUSED int arg1, UNUSED int arg2, UNUSED void *common) {
@@ -59,7 +75,7 @@ static int callbackThread(UNUSED SceSize args, UNUSED void *argp) {
 }
 
 void init_mediaengine(void) {
-    if(!J_Init(false)){
+    if (!J_Init(false)) {
         /* Init success, lets enable it! */
         extern int mediaengine_available;
         extern int volatile mediaengine_sound;
@@ -71,7 +87,7 @@ void init_mediaengine(void) {
 void init_audiomanager(void) {
     extern int audioOutput(SceSize args, void *argp);
     extern int audio_manager_thid;
-    audio_manager_thid = sceKernelCreateThread("AudioOutput", audioOutput, 0x12 , 0x20000, THREAD_ATTR_USER | THREAD_ATTR_VFPU, NULL);
+    audio_manager_thid = sceKernelCreateThread("AudioOutput", audioOutput, 0x12, 0x20000, THREAD_ATTR_USER | THREAD_ATTR_VFPU, NULL);
     sceKernelStartThread(audio_manager_thid, 0, NULL);
 }
 
@@ -91,7 +107,7 @@ static void gfx_psp_init(UNUSED const char *game_name, UNUSED bool start_in_full
     }
 
     scePowerSetClockFrequency(333, 333, 166);
-    sceKernelDelayThread(250);
+    sceKernelDelayThread(1000);
     init_mediaengine();
 
     pspDebugScreenInitEx(0, PSP_DISPLAY_PIXEL_FORMAT_8888, 0);

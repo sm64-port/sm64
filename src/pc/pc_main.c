@@ -141,6 +141,7 @@ int audioOutput(SceSize args, void *argp) {
         mediaengine_sound = 1;
     }
 #endif
+    sceKernelDelayThread(1000);
 
     while (running) {
         AudioTask task = stack_pop(stack);
@@ -262,27 +263,24 @@ static void on_fullscreen_changed(bool is_now_fullscreen) {
     configFullscreen = is_now_fullscreen;
 }
 
-#if defined(TARGET_DC)
+
+#if (defined(TARGET_DC) || defined(TARGET_PSP))
 void *main_pc_pool = NULL;
 void *main_pc_pool_gd = NULL;
 #endif
 void main_func(void) {
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
     static u32 pool[0x165000/8 / 4 * sizeof(void *) * 2];
 #else
-    static u8 pool[0x165000+0x70800];
+    static u8 pool[0x165000+0x70800] __attribute__((aligned(4)));
     main_pc_pool = &pool;
     main_pc_pool_gd = &pool[0x165000];
 #endif
     main_pool_init(pool, pool + sizeof(pool) / sizeof(pool[0]));
     gEffectsMemoryPool = mem_pool_init(0x4000, MEMORY_POOL_LEFT);
 
-#if !defined(TARGET_DC)
     configfile_load(CONFIG_FILE);
     atexit(save_config);
-#else
-    (void)save_config;
-#endif
 
 #ifdef TARGET_WEB
     emscripten_set_main_loop(em_main_loop, 0, 0);
@@ -358,6 +356,13 @@ void main_func(void) {
     inited = 1;
 #else
     inited = 1;
+
+    /* Needed because not everything is synced up */
+#ifdef TARGET_PSP
+    extern void psp_divert_slow_memory_card(void);
+    psp_divert_slow_memory_card();
+#endif
+
     while (1) {
         wm_api->main_loop(produce_one_frame);
     }
