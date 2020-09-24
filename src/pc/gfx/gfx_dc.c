@@ -158,4 +158,123 @@ struct GfxWindowManagerAPI gfx_dc = { gfx_dc_init,
                                       gfx_dc_swap_buffers_begin,
                                       gfx_dc_swap_buffers_end,
                                       gfx_dc_get_time };
+
+
+/* Last ditch 118kb saver, less after VMU */
+#if 0
+#include <stdio.h>
+#include <assert.h>
+#include <arch/rtc.h>
+#include <kos/fs.h>
+#include <kos/thread.h>
+#include <kos/fs_pty.h>
+#include <kos/fs_ramdisk.h>
+#include <kos/library.h>
+#include <kos/net.h>
+#include <kos/dbgio.h>
+#include <dc/fs_iso9660.h>
+#include <dc/cdrom.h>
+#include <dc/fs_vmu.h>
+#include <dc/vmufs.h>
+#include <dc/cdrom.h>
+#include <dc/spu.h>
+#include <dc/pvr.h>
+#include <dc/maple.h>
+#include <dc/sound/sound.h>
+#include <dc/scif.h>
+#include <dc/fs_dcload.h>
+#include <dc/fs_dclsocket.h>
+#include <arch/irq.h>
+#include <arch/timer.h>
+#include <dc/fb_console.h>
+int arch_auto_init() {
+
+  /* Initialize memory management */
+  mm_init();
+
+  /* Do this immediately so we can receive exceptions for init code
+     and use ints for dbgio receive. */
+  irq_init();         /* IRQs */
+  irq_disable();          /* Turn on exceptions */
+
+  fs_dcload_init_console();   /* Init dc-load console, if applicable */
+
+  // Init SCIF for debug stuff (maybe)
+  scif_init();
+
+  /* Init debug IO */
+  dbgio_init();
+
+  timer_init();           /* Timers */
+  hardware_sys_init();        /* DC low-level hardware init */
+
+  /* Initialize our timer */
+  timer_ms_enable();
+  rtc_init();
+
+  /* Threads */
+  thd_init(THD_MODE_PREEMPT);
+
+  nmmgr_init();
+
+  fs_init();          /* VFS */
+  fs_pty_init();          /* Pty */
+  fs_ramdisk_init();      /* Ramdisk */
+
+  /* DC peripheral init */
+	/* Init sound */
+	spu_init();
+	spu_dma_init();
+
+	/* Init CD-ROM.. NOTE: NO GD-ROM SUPPORT. ONLY CDs/CDRs. */
+	//cdrom_init();
+
+	/* Setup maple bus */
+	maple_init();
+
+	/* Init video */
+	vid_init(DEFAULT_VID_MODE, DEFAULT_PIXEL_MODE);
+
+  if(!(__kos_init_flags & INIT_NO_DCLOAD) && *DCLOADMAGICADDR == DCLOADMAGICVALUE) {
+      dbglog(DBG_INFO, "dc-load console support enabled\n");
+      fs_dcload_init();
+  }
+
+  //fs_iso9660_init();
+  //vmufs_init();
+  //fs_vmu_init();
+
+  // Initialize library handling
+  library_init();
+
+  /* Now comes the optional stuff */
+  if(__kos_init_flags & INIT_IRQ) {
+      irq_enable();       /* Turn on IRQs */
+  }
+
+  return 0;
+}
+
+void  arch_auto_shutdown() {
+    fs_dclsocket_shutdown();
+    net_shutdown();
+
+    irq_disable();
+    snd_shutdown();
+    timer_shutdown();
+    hardware_shutdown();
+    pvr_shutdown();
+    library_shutdown();
+    fs_dcload_shutdown();
+    //fs_vmu_shutdown();
+    //vmufs_shutdown();
+    //fs_iso9660_shutdown();
+    //fs_ramdisk_shutdown();
+    fs_pty_shutdown();
+    fs_shutdown();
+    thd_shutdown();
+    rtc_shutdown();
+}
+#endif
+
 #endif // TARGET_DC

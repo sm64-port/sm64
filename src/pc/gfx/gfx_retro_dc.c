@@ -892,6 +892,14 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
             }
         }
     }
+
+    /* Will be enabled when pvr fog is working, something isn't quite right current */
+#if 0
+    if(use_fog){
+        float fog_color[4] = {rdp.fog_color.r/(float)255, rdp.fog_color.g/(float)255, rdp.fog_color.b/(float)255, rdp.fog_color.a/(float)512};
+        glFogfv(GL_FOG_COLOR, fog_color);
+    }
+#endif
     
     bool use_texture = used_textures[0] || used_textures[1];
     uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;

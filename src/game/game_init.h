@@ -32,7 +32,7 @@ extern OSMesgQueue D_80339CB8;
 extern OSMesg D_80339CD0;
 extern OSMesg D_80339CD4;
 extern struct VblankHandler gGameVblankHandler;
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
 extern uintptr_t gPhysicalFrameBuffers[3];
 extern uintptr_t gPhysicalZBuffer;
 #endif

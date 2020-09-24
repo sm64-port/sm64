@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-#if !defined(TARGET_DC)
+#if !(defined(TARGET_DC) || defined(TARGET_PSP))
 // 0x70800 bytes
 #ifdef AVOID_UB
 u16 gFrameBuffers[3][SCREEN_WIDTH * SCREEN_HEIGHT];

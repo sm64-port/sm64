@@ -216,11 +216,15 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         glDisable(GL_TEXTURE_2D);
     }
 
+    /* Will be enabled when pvr fog is working, something isn't quite right current */
+#if 0
     if (prg->shader_id & SHADER_OPT_FOG) {
-        // blend it on top of normal tris later
-        //cur_fog_ofs = ofs;
-        //ofs += 3;
+        glDisable(GL_BLEND);
+        glEnable(GL_FOG);
+    } else {
+        glDisable(GL_FOG);
     }
+#endif
 
     if (prg->num_inputs) {
         // have colors
@@ -539,13 +543,13 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
     }
 
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        //glDepthMask(false);
+        glDepthMask(false);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * cur_buf_num_tris);
 
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        //glDepthMask(true);
+        glDepthMask(true);
     }
 
     // if there's two textures, draw polys with the second texture
@@ -558,6 +562,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
 extern void gfx_opengl_2d_projection(void);
 extern void gfx_opengl_reset_projection(void);
 void gfx_opengl_draw_triangles_2d(float buf_vbo[], UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris) {
+    glDisable(GL_FOG);
     gfx_opengl_2d_projection();
 
     glEnable(GL_TEXTURE_2D);
@@ -682,9 +687,27 @@ static void gfx_opengl_init(void) {
     glViewport(0, 0, 640, 480);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0f,640.0f/480.0f,0.1f,100.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+    /* There seems to be hardware issues with fog, needs investigation */
+    /* fog values
+    BOB: 6400/59392 = 9.28/1 
+    JRB: 1280/64512 and 1828/63964
+    HMC: 3200/62592pvr
+    */
+    static float fog[4] = {1.f, 0.f, 0.f, 0.5f};
+#if 1
+    glFogi(GL_FOG_MODE,GL_LINEAR);
+    glFogf(GL_FOG_START, 0.f);
+    glFogf(GL_FOG_END, 256.f);
+#else
+    glFogi(GL_FOG_MODE,GL_EXP);
+    fog[3] = ortho_z_far;
+    glFogf(GL_FOG_DENSITY, ortho_z_near);
+#endif
+
+    glFogfv(GL_FOG_COLOR, fog);
 }
 
 static void gfx_opengl_on_resize(void) {
