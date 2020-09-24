@@ -62,8 +62,6 @@ u16 gDemoInputListID = 0;
 struct DemoInput gRecordedDemoInput = { 0 }; // possibly removed in EU. TODO: Check
 
 #if defined(TARGET_PSP)
-#include <stdio.h>
-#include <psppower.h>
 #define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* psp tick rate obtained from sceRtcGetTickResolution() */
 #elif defined(TARGET_DC)
 #define SECONDS_PER_CYCLE (1.0f/1000000.0f) /* Figure this out for dc */
