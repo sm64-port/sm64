@@ -145,8 +145,10 @@ void seq_channel_layer_free(struct SequenceChannel *seqChannel, s32 layerIndex) 
 #ifdef VERSION_EU
         audio_list_push_back(&gLayerFreeList, &layer->listItem);
 #else
+        /* Possible crash point */
+        if(layer != NULL) {
         struct AudioListItem *item = &layer->listItem;
-        if ((item) && (item->prev == NULL)) {
+        if ((item != NULL) && (item->prev == NULL)) {
             gLayerFreeList.prev->next = item;
             item->prev = gLayerFreeList.prev;
             item->next = &gLayerFreeList;
@@ -157,7 +159,7 @@ void seq_channel_layer_free(struct SequenceChannel *seqChannel, s32 layerIndex) 
 #endif
         seq_channel_layer_disable(layer);
         seqChannel->layers[layerIndex] = NULL;
-    }
+    }}
 }
 
 void sequence_channel_disable(struct SequenceChannel *seqChannel) {
