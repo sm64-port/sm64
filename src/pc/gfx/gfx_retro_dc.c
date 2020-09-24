@@ -1015,7 +1015,7 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx) {
     }
 }
 
-extern void gfx_opengl_draw_triangles_2d(float buf_vbo[], UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris);
+extern void gfx_opengl_draw_triangles_2d(void *buf_vbo, size_t buf_vbo_len, size_t buf_vbo_num_tris);
 static void gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, uint8_t vtx1_idx2, uint8_t vtx2_idx2, uint8_t vtx3_idx2) {
     gfx_flush();
     dc_fast_t *v1 = &rsp.loaded_vertices_2D[vtx1_idx];
@@ -1125,22 +1125,21 @@ static void gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx,
 
     //float tri_buf[10*6] = {0};
     int tri_num_vert = 0;
-
-    for (i = 0; i < 6; i++) {
-        tri_buf[tri_num_vert++] = v_arr[i]->vert.x;
-        tri_buf[tri_num_vert++] = v_arr[i]->vert.y;
-        tri_buf[tri_num_vert++] = v_arr[i]->vert.z;
+    for (tri_num_vert = 0; tri_num_vert < 6; tri_num_vert++) {
+        quad_vbo[tri_num_vert].vert.x = v_arr[tri_num_vert]->vert.x;
+        quad_vbo[tri_num_vert].vert.y = v_arr[tri_num_vert]->vert.y;
+        quad_vbo[tri_num_vert].vert.z = v_arr[tri_num_vert]->vert.z;
         
         if (use_texture) {
-            float u = (v_arr[i]->texture.u - rdp.texture_tile.uls * 8) / 32.0f;
-            float v = (v_arr[i]->texture.v - rdp.texture_tile.ult * 8) / 32.0f;
+            float u = (v_arr[tri_num_vert]->texture.u - rdp.texture_tile.uls * 8) / 32.0f;
+            float v = (v_arr[tri_num_vert]->texture.v - rdp.texture_tile.ult * 8) / 32.0f;
             if ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT) {
                 // Linear filter adds 0.5f to the coordinates
                 u += 0.5f;
                 v += 0.5f;
             }
-            tri_buf[tri_num_vert++] = u / tex_width;
-            tri_buf[tri_num_vert++] = v / tex_height;
+            quad_vbo[tri_num_vert].texture.u = u / tex_width;
+            quad_vbo[tri_num_vert].texture.v = v / tex_height;
         }
 
         struct RGBA white = (struct RGBA){0xff, 0xff, 0xff, 0xff};
@@ -1156,7 +1155,7 @@ static void gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx,
                         color = &rdp.prim_color;
                         break;
                     case CC_SHADE:
-                        color = (struct RGBA *)&v_arr[i]->color;
+                        color = (struct RGBA *)&v_arr[tri_num_vert]->color;
                         break;
                     case CC_ENV:
                         color = &rdp.env_color;
@@ -1169,13 +1168,12 @@ static void gfx_sp_quad_2d(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx,
                 }
             }
         }
-        //struct RGBA *color = &v_arr[i]->color;
-        tri_buf[tri_num_vert++] = color->r / 255.0f;
-        tri_buf[tri_num_vert++] = color->g / 255.0f;
-        tri_buf[tri_num_vert++] = color->b / 255.0f;
-        tri_buf[tri_num_vert++] = color->a / 255.0f;
+        quad_vbo[tri_num_vert].color.array.r = color->r;
+        quad_vbo[tri_num_vert].color.array.g = color->g;
+        quad_vbo[tri_num_vert].color.array.b = color->b;
+        quad_vbo[tri_num_vert].color.array.a = color->a;
     }
-    gfx_opengl_draw_triangles_2d(tri_buf, 0, use_texture);
+    gfx_opengl_draw_triangles_2d((void*)quad_vbo, 0, use_texture);
 }
 
 static void gfx_sp_geometry_mode(uint32_t clear, uint32_t set) {

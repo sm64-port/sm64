@@ -22,10 +22,12 @@ uint16_t snd_buffer_internal[DC_AUDIO_SAMPLES_DESIRED * DC_AUDIO_CHANNELS] __att
 static int audio_frames_generated_total;
 static int audio_frames_generated_cur;
 
+extern void create_next_audio_buffer(uint16_t *samples, uint32_t num_samples);
 void *audio_callback(UNUSED snd_stream_hnd_t hnd, int samples_requested, int *samples_returned) {
-    int backup_req = samples_requested;
-    void *snd_buf = snd_buffer_internal;
+    const int backup_req = samples_requested;
+    /* Catch-22, can be used to play more samples, but then takes longer, leading to needing more samples */
 #if 0
+    void *snd_buf = snd_buffer_internal;
     do {
         //printf("left to generate %d/%d bytes\n", samples_requested, backup_req);
         create_next_audio_buffer(snd_buf, SAMPLES_HIGH);
@@ -39,9 +41,11 @@ void *audio_callback(UNUSED snd_stream_hnd_t hnd, int samples_requested, int *sa
 #endif
     int ret = backup_req;
     *samples_returned = ret;
+#ifdef DEBUG
     void *buf = snd_buffer_internal;
-    //printf("%s:%d asked for %d and gave %d @ %x with %d left \n", __func__, __LINE__, backup_req, ret, (unsigned int) buf, samples_requested);
-    //fflush(stdout);
+    printf("%s:%d asked for %d and gave %d @ %x with %d left \n", __func__, __LINE__, backup_req, ret, (unsigned int) buf, samples_requested);
+    fflush(stdout);
+#endif
     audio_frames_generated_cur = 0;
     return snd_buffer_internal;
 }
@@ -75,7 +79,8 @@ static int audio_dc_get_desired_buffered(void) {
     return 1100;
 }
 
-static void audio_dc_play(const uint8_t *buf, size_t len) {
+/* We do our own cycle and processing of audio */
+static void audio_dc_play(UNUSED const uint8_t *buf, UNUSED size_t len) {
     void *snd_buf = snd_buffer_internal + audio_frames_generated_cur * (SAMPLES_HIGH * DC_AUDIO_CHANNELS * sizeof(short));
 
     if (gProcessAudio) {

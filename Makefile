@@ -543,7 +543,7 @@ endif
 ifeq ($(TARGET_DC),1)
   #Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -DTARGET_DC -DNDEBUG -Isrc/pc/gfx/gldc -Wall -Wextra -g0
+  PLATFORM_CFLAGS  := $(KOS_CFLAGS) -DTARGET_DC -DNDEBUG -Isrc/pc/gfx/gldc -Wall -Wextra -g3
   PLATFORM_LDFLAGS := -Wl,--gc-sections  -Wl,-Map=output.map
 endif
 ifeq ($(TARGET_WEB),1)
@@ -570,7 +570,7 @@ ifeq ($(ENABLE_OPENGL),1)
     GFX_LDFLAGS += -lGL -lSDL2
   endif
   ifeq ($(TARGET_PSP),1)
-    GFX_LDFLAGS += -L$(PSPSDK_PREFIX)/lib src/pc/libME.a src/pc/gfx/libpspmath.a -lpspdebug  -lpspgu -lpspvfpu -lpspctrl -lpspge -lpspdisplay -lpsphprm -lm -lpspsdk -lpsprtc -lpspaudio -lpsputility -lpspnet_inet -lpsppower -lc -lpspuser -lpspvram  
+    GFX_LDFLAGS += -L$(PSPSDK_PREFIX)/lib src/pc/libME.a src/pc/gfx/libpspmath.a -lpspdebug  -lpspgu -lpspvfpu -lpspctrl -lpspge -lpspdisplay -lm -lpspsdk -lpsprtc -lpspaudio -lpsputility -lpspnet_inet -lpsppower -lc -lpspuser -lpspvram  
   endif
   ifeq ($(TARGET_DC),1)
     GFX_CFLAGS  += -Isrc/pc/audio/aldc2
@@ -897,7 +897,7 @@ $(BUILD_DIR)/%.o: %.cpp
 $(BUILD_DIR)/%.o: %.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<
 	@echo $@
-	$(CC) -c $(CFLAGS) -o $@ $<
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c
@@ -930,7 +930,8 @@ $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 
 else
 $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES)
-	$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
+	@echo "Linking $@"
+	@$(LD) -L $(BUILD_DIR) -o $@ $(O_FILES) $(SOUND_OBJ_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 ifeq ($(TARGET_PSP),1)
 	psp-fixup-imports $@
 	psp-prxgen $@ $@.prx
