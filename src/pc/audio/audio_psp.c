@@ -1,8 +1,5 @@
 #if defined(TARGET_PSP)
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include <PR/ultratypes.h>
 #include "audio_api.h"
 #include <pspkernel.h>
 #include <pspaudio.h>

@@ -439,6 +439,7 @@ ifeq ($(TARGET_PSP),1)
   AS := psp-as
   CXX := psp-g++
   OPT_FLAGS += -march=mips32
+  CC_CFLAGS += -DTARGET_PSP
 endif
 
 ifeq ($(TARGET_DC),1)
@@ -521,6 +522,7 @@ ifeq ($(TARGET_DC),1)
   LD  := $(CC)
   OBJDUMP := sh-elf-objdump
   OBJCOPY := sh-elf-objcopy
+  CC_CHECK_CFLAGS += -DPSP_LEGACY_TYPES_DEFINED -DPSP_LEGACY_VOLATILE_TYPES_DEFINED
 endif
 
 # Platform-specific compiler and linker flags
@@ -537,7 +539,7 @@ ifeq ($(TARGET_PSP),1)
   PSP_PREFIX    = $(shell psp-config -P)
   # Notes from neo
   #-gdwarf-2 -gstrict-dwarf -g3 --ffunction-sections -fdata-sections -Wl,-gc-sections
-  PLATFORM_CFLAGS  := -DTARGET_PSP -DPSP -D__PSP__ -DSRC_VER=\"$(SRC_VER)\" -I$(PSPSDK_PREFIX)/include -G0 -D_PSP_FW_VERSION=500 -DNDEBUG -O3 -falign-functions=64 -flimit-function-alignment -g3 -fno-rounding-math -ffp-contract=off -Wfatal-errors -fsigned-char
+  PLATFORM_CFLAGS  := -DTARGET_PSP -DPSP -D__PSP__ -DSRC_VER=\"$(SRC_VER)\" -DPSP_LEGACY_TYPES_DEFINED -DPSP_LEGACY_VOLATILE_TYPES_DEFINED -I$(PSPSDK_PREFIX)/include -G0 -D_PSP_FW_VERSION=500 -DNDEBUG -O3 -falign-functions=64 -flimit-function-alignment -g3 -fno-rounding-math -ffp-contract=off -Wfatal-errors -fsigned-char
   PLATFORM_LDFLAGS := -I$(PSPSDK_PREFIX)/lib -specs=$(PSPSDK_PREFIX)/lib/prxspecs -Wl,-q,-T$(PSPSDK_PREFIX)/lib/linkfile.prx $(PSPSDK_PREFIX)/lib/prxexports.o
 endif
 ifeq ($(TARGET_DC),1)
@@ -898,7 +900,6 @@ $(BUILD_DIR)/%.o: %.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<
 	@echo $@
 	@$(CC) -c $(CFLAGS) -o $@ $<
-
 
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c
 	@$(CC_CHECK) $(CC_CHECK_CFLAGS) -MMD -MP -MT $@ -MF $(BUILD_DIR)/$*.d $<

@@ -1,4 +1,5 @@
 #if defined(TARGET_PSP)
+#include <PR/ultratypes.h>
 #include "gfx_window_manager_api.h"
 #include "gfx_screen_config.h"
 #include "macros.h"
@@ -15,7 +16,7 @@
 
 #include "../melib.h"
 #include "../psp_audio_stack.h"
-#include "sceGuDebugPrint.h"
+#include "../sceGuDebugPrint.h"
 
 #define GFX_API_NAME "PSP - sceGU"
 #define SCR_WIDTH (480)
