@@ -3,8 +3,9 @@
 #include "lib/src/libultra_internal.h"
 #include "lib/src/osContInternal.h"
 
-#if !defined(TARGET_PSP) && !defined(TARGET_DC)
+
 #include "controller_recorded_tas.h"
+#if !defined(TARGET_PSP) && !defined(TARGET_DC)
 #include "controller_keyboard.h"
 #endif
 

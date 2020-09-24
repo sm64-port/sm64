@@ -46,6 +46,7 @@
 #include "gfx_cc.h"
 #include "gfx_rendering_api.h"
 #include "macros.h"
+#include "gl_fast_vert.h"
 
 enum MixType {
     SH_MT_NONE,
@@ -80,11 +81,7 @@ static struct ShaderProgram *cur_shader = NULL;
 
 static struct SamplerState tmu_state[2];
 
-static const float *cur_buf = NULL;
-static const float *cur_fog_ofs = NULL;
-static size_t cur_buf_size = 0;
-static size_t cur_buf_num_tris = 0;
-static size_t cur_buf_stride = 0;
+static const dc_fast_t *cur_buf = NULL;
 static bool gl_blend = false;
 static bool gl_depth = false;
 static bool gl_npot = false;
@@ -95,11 +92,11 @@ static void *scale_buf = NULL;
 static int scale_buf_size = 0;
 #endif
 
-//static float c_mix[] = { 0.f, 0.f, 0.f, 1.f };
+/*
+static float c_mix[] = { 0.f, 0.f, 0.f, 1.f };
 static float c_invmix[] = { 1.f, 1.f, 1.f, 1.f };
-//static const float c_white[] = { 1.f, 1.f, 1.f, 1.f };
-
-// from https://github.com/z2442/sm64-port
+static const float c_white[] = { 1.f, 1.f, 1.f, 1.f };
+*/
 
 static void resample_32bit(const uint32_t *in, const int inwidth, const int inheight, uint32_t *out, const int outwidth, const int outheight) {
   int i, j;
@@ -199,18 +196,14 @@ static inline GLenum texenv_set_texture_texture(UNUSED struct ShaderProgram *prg
 }
 
 static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
-    const float *ofs = cur_buf;
-
     // vertices are always there
-    glVertexPointer(3, GL_FLOAT, cur_buf_stride, ofs);
-    ofs += 3;
+    glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].vert);
 
     // have texture(s), specify same texcoords for every active texture
     if (prg->texture_used[0] || prg->texture_used[1]) {
         glEnable(GL_TEXTURE_2D);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, cur_buf_stride, ofs);
-        ofs += 2;
+        glTexCoordPointer(2, GL_FLOAT, sizeof(dc_fast_t), &cur_buf[0].texture);
     } else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisable(GL_TEXTURE_2D);
@@ -234,11 +227,11 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         // HACKHACK: alpha is 0 in the transition shader (0x01A00045), maybe figure out the flags instead
         //const int vlen = (prg->cc.opt_alpha && prg->shader_id != 0x01A00045) ? 4 : 3;
         //const int hack = vlen * (prg->num_inputs > 1);
-
+        #if 0
         const int vlen = 4;
         const int hack = 0;
 
-        #if 0
+
         if (prg->texture_used[1] && prg->cc.do_mix[0]) {
             // HACK: when two textures are mixed by vertex color, store the color
             //       it will be used later when rendering two texture passes
@@ -255,10 +248,8 @@ static void gfx_opengl_apply_shader(struct ShaderProgram *prg) {
         {
             // otherwise use vertex colors as normal
             glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(vlen, GL_FLOAT, cur_buf_stride, ofs + hack);
+            glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(dc_fast_t), &cur_buf[0].color);
         }
-
-        ofs += 4;//prg->num_inputs * vlen;
     } else {
         glDisableClientState(GL_COLOR_ARRAY);
     }
@@ -292,7 +283,6 @@ static void gfx_opengl_unload_shader(struct ShaderProgram *old_prg) {
         cur_shader->enabled = false;
         cur_shader = NULL;
     }
-    cur_fog_ofs = NULL; // clear fog colors
 }
 
 static void gfx_opengl_load_shader(struct ShaderProgram *new_prg) {
@@ -479,6 +469,7 @@ static void gfx_opengl_set_use_alpha(bool use_alpha) {
 // on top of the normal tris and blends them to achieve sort of the same effect
 // as fog would
 static inline void gfx_opengl_pass_fog(void) {
+#ifndef TARGET_DC
     // if texturing is enabled, disable it, since we're blending colors
     if (cur_shader->texture_used[0] || cur_shader->texture_used[1])
         glDisable(GL_TEXTURE_2D);
@@ -497,11 +488,13 @@ static inline void gfx_opengl_pass_fog(void) {
     // if texturing was enabled, re-enable it
     if (cur_shader->texture_used[0] || cur_shader->texture_used[1])
         glEnable(GL_TEXTURE_2D);
+#endif
 }
 
 // this assumes the two textures are combined like so:
 // result = mix(tex0.rgb, tex1.rgb, vertex.rgb)
 static inline void gfx_opengl_pass_mix_texture(void) {
+#ifndef TARGET_DC
     // set second texture
     glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[1]].tex);
     gfx_opengl_apply_tmu_state(cur_shader->texture_ord[1]);
@@ -522,13 +515,11 @@ static inline void gfx_opengl_pass_mix_texture(void) {
     // set old texture
     glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
     gfx_opengl_apply_tmu_state(cur_shader->texture_ord[0]);
+#endif
 }
 
-static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
-    cur_buf = buf_vbo;
-    cur_buf_size = buf_vbo_len * 4;
-    cur_buf_num_tris = buf_vbo_num_tris;
-    cur_buf_stride = cur_buf_size / (3 * cur_buf_num_tris);
+static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len, size_t buf_vbo_num_tris) {
+    cur_buf = (void*)buf_vbo;
 
     gfx_opengl_apply_shader(cur_shader);
 
@@ -546,7 +537,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
         glDepthMask(false);
     }
 
-    glDrawArrays(GL_TRIANGLES, 0, 3 * cur_buf_num_tris);
+    glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
         glDepthMask(true);
@@ -561,26 +552,25 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
 
 extern void gfx_opengl_2d_projection(void);
 extern void gfx_opengl_reset_projection(void);
-void gfx_opengl_draw_triangles_2d(float buf_vbo[], UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris) {
+void gfx_opengl_draw_triangles_2d(void *buf_vbo, UNUSED size_t buf_vbo_len, UNUSED size_t buf_vbo_num_tris) {
     glDisable(GL_FOG);
     gfx_opengl_2d_projection();
 
+    dc_fast_t *tris = buf_vbo;
+
     glEnable(GL_TEXTURE_2D);
     glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(dc_fast_t), &tris[0].vert);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(dc_fast_t), &tris[0].texture);
+    glColorPointer(GL_BGRA, GL_UNSIGNED_BYTE, sizeof(dc_fast_t), &tris[0].color);
+
     if(buf_vbo_num_tris) {
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 9 * sizeof(float), buf_vbo);
-        glTexCoordPointer(2, GL_FLOAT, 9 * sizeof(float), buf_vbo + 3);
-        glColorPointer(4, GL_FLOAT, 9 * sizeof(float), buf_vbo + 5);
-
         // if there's two textures, set primary texture first
         if (cur_shader->texture_used[1])
             glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
     } else {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-        glVertexPointer(3, GL_FLOAT, 7 * sizeof(float), buf_vbo);
-        glColorPointer(4, GL_FLOAT, 7 * sizeof(float), buf_vbo + 3);
     }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * 2 /* 2 tri quad */);
@@ -683,6 +673,10 @@ static void gfx_opengl_init(void) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glShadeModel(GL_SMOOTH);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
 
     glViewport(0, 0, 640, 480);
     glMatrixMode(GL_PROJECTION);
