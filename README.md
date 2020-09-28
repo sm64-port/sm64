@@ -49,7 +49,7 @@ Notes: Currently only supported building under linux and WSL
 3. Run `make TARGET_PSP=1`
 4. Optionally if you would prefer an EBOOT.PBP for use on CFW Run `make TARGET_PSP=1 pbp` , and the folder `mario64` will be made in the build folder.
 
-Windows : NOTE UNSUPPORTED currently, must follow directions exactly!
+**Windows Instructions : NOTE UNSUPPORTED currently, must follow directions exactly!**
 1. Install the PSP toolchain https://darksectordds.github.io/html/MinimalistPSPSDK/index.html
 2. Install Python3 from python.org, NOT the Windows Store
 2. Download this pack of helpful tools http://www.mediafire.com/file/jogmmqfwclmji3v/file
@@ -66,6 +66,12 @@ Windows : NOTE UNSUPPORTED currently, must follow directions exactly!
 12. Run `make TARGET_PSP=1 SHELL=sh PYTHON=py`
 13. Optionally if you would prefer an EBOOT.PBP for use on CFW Run `make TARGET_PSP=1 SHELL=sh PYTHON=py pbp`, and the folder `mario64` will be made in the build folder.
 
+**Docker Instructions**
+
+1. Place a Super Mario 64 ROM called `baserom.<VERSION>.z64` into the repository's root directory for asset extraction, where `VERSION` can be `us`, `jp`, or `eu`. **Note: Only US supported**
+2. Run the Docker container donated by mkst: `docker run --rm -ti -v $(pwd):/sm64 markstreet/sm64:psp make TARGET_PSP=1 pbp --jobs`
+3. This will produce an EBOOT.PBP in `build/VERSION_psp/mario64/` folder along with `snd_eng.prx` for transfer to any CFW enabled Sony PSP.
+
 ### Sega Dreamcast
 **Fixed textures live in the psp/textures/ folder. copy these into textures/, overwrite the extracted ones, and rebuild**
 
@@ -81,7 +87,7 @@ Windows : NOTE UNSUPPORTED currently, must follow directions exactly!
 2. Run the Docker container donated by mkst: `docker run --rm -ti -v $(pwd):/sm64 markstreet/sm64:dreamcast make TARGET_DC=1 scramble --jobs`
 3. This will produce a scrambled binary called `1ST_READ.BIN` ready to be burned onto a cd-r for use in a Dreamcast.
 
-#### Troubleshooting
+### Troubleshooting (For Any Platform)
 
 1. If you get `make: gcc: command not found` or `make: gcc: No such file or directory` although the packages did successfully install, you probably launched the wrong MSYS2. Read the instructions again. The terminal prompt should contain "MINGW32" or "MINGW64" in purple text, and **NOT** "MSYS".
 2. If you get `Failed to open baserom.us.z64!` you failed to place the baserom in the repository. You can write `ls` to list the files in the current working directory. If you are in the `sm64-port` directory, make sure you see it here.
