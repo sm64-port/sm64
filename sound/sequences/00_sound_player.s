@@ -84,13 +84,18 @@ chan_dyncall
 .poll_023589:
 chan_delay1
 chan_ioreadval 0
-chan_bltz .skip_023589 # if we have a signal:
-  chan_beqz .force_stop_023589 # told to stop
-  chan_jump .start_playing_023589 # told to play something else
+# if we have a signal:
+chan_bltz .skip_023589
+  # told to stop
+  chan_beqz .force_stop_023589
+  # told to play something else
+  chan_jump .start_playing_023589
 .skip_023589:
 chan_testlayerfinished 0
-chan_beqz .poll_023589 # if layer 0 hasn't finished, keep polling
-chan_jump .main_loop_023589 # otherwise go back to the main loop
+# if layer 0 hasn't finished, keep polling
+chan_beqz .poll_023589
+# otherwise go back to the main loop
+chan_jump .main_loop_023589
 .force_stop_023589:
 chan_freelayer 0
 chan_freelayer 1
@@ -191,15 +196,20 @@ chan_dyncall
 .poll_7:
 chan_delay1
 chan_ioreadval 0
-chan_bltz .skip_7 # if we have a signal:
-  chan_beqz .force_stop_7 # told to stop
+# if we have a signal:
+chan_bltz .skip_7
+  # told to stop
+  chan_beqz .force_stop_7
   chan_unreservenotes
-  chan_jump .start_playing_7 # told to play something else
+  # told to play something else
+  chan_jump .start_playing_7
 .skip_7:
 chan_testlayerfinished 0
-chan_beqz .poll_7 # if layer 0 hasn't finished, keep polling
+# if layer 0 hasn't finished, keep polling
+chan_beqz .poll_7
 chan_unreservenotes
-chan_jump .main_loop_7 # otherwise go back to the main loop
+# otherwise go back to the main loop
+chan_jump .main_loop_7
 .force_stop_7:
 chan_freelayer 0
 chan_freelayer 1
@@ -222,10 +232,13 @@ chan_end
 chan_setpanmix 127
 chan_setvolscale 127
 chan_setvibratoextent 0
-chan_ioreadval 1 # IO slots 0-3 are reset to -1 when read; restore the value
+# IO slots 0-3 are reset to -1 when read; restore the value
+chan_ioreadval 1 
 chan_iowriteval 0
-chan_break # break out of the loop
-chan_break # force the caller to return immediately
+# break out of the loop
+chan_break
+# force the caller to return immediately
+chan_break
 chan_end
 
 # Set reverb in way that takes area echo level and volume into account. This
