@@ -423,10 +423,10 @@ export LANG := C
 
 else # TARGET_N64
 
-AS := as
+AS := $(CROSS)as
 ifneq ($(TARGET_WEB),1)
-  CC := gcc
-  CXX := g++
+  CC := $(CROSS)gcc
+  CXX := $(CROSS)g++
 else
   CC := emcc
 endif
@@ -435,9 +435,9 @@ ifeq ($(TARGET_WINDOWS),1)
 else
   LD := $(CC)
 endif
-CPP := cpp -P
-OBJDUMP := objdump
-OBJCOPY := objcopy
+CPP := $(CROSS)cpp -P
+OBJDUMP := $(CROSS)objdump
+OBJCOPY := $(CROSS)objcopy
 PYTHON := python3
 
 # Platform-specific compiler and linker flags
