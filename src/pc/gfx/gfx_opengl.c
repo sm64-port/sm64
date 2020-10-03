@@ -14,7 +14,7 @@
 #define FOR_WINDOWS 0
 #endif
 
-#if FOR_WINDOWS
+#if USE_GLEW
 #include <GL/glew.h>
 #include "SDL.h"
 #define GL_GLEXT_PROTOTYPES 1
@@ -472,7 +472,7 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
 }
 
 static void gfx_opengl_init(void) {
-#if FOR_WINDOWS
+#if USE_GLEW
     glewInit();
 #endif
     

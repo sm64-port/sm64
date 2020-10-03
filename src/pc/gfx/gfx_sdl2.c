@@ -8,7 +8,7 @@
 #define FOR_WINDOWS 0
 #endif
 
-#if FOR_WINDOWS
+#if USE_GLEW
 #include <GL/glew.h>
 #include "SDL.h"
 #define GL_GLEXT_PROTOTYPES 1

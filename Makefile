@@ -30,12 +30,17 @@ ifeq ($(TARGET_N64),0)
   NON_MATCHING := 1
   GRUCODE := f3dex2e
   TARGET_WINDOWS := 0
-  ifeq ($(TARGET_WEB),0)
+  TARGET_HAIKU := 0
+  ifeq ($(TARGET_WEB)$(TARGET_HAIKU),00)
     ifeq ($(OS),Windows_NT)
       TARGET_WINDOWS := 1
     else
-      # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
-      TARGET_LINUX := 1
+      UNAME := $(shell uname -s)
+      ifeq ($(UNAME),Haiku)
+        TARGET_HAIKU = 1
+      else
+        TARGET_LINUX := 1
+      endif
     endif
   endif
 
@@ -447,7 +452,11 @@ ifeq ($(TARGET_WINDOWS),1)
 endif
 ifeq ($(TARGET_LINUX),1)
   PLATFORM_CFLAGS  := -DTARGET_LINUX `pkg-config --cflags libusb-1.0`
-  PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0` -lasound -lpulse -no-pie
+  PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0` `pkg-config --libs alsa` `pkg-config --libs libpulse` -no-pie
+endif
+ifeq ($(TARGET_HAIKU),1)
+  PLATFORM_CFLAGS  := -DTARGET_HAIKU
+  PLATFORM_LDFLAGS := -lm -lpthread -no-pie
 endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
@@ -461,12 +470,16 @@ ifeq ($(ENABLE_OPENGL),1)
   GFX_CFLAGS  := -DENABLE_OPENGL
   GFX_LDFLAGS :=
   ifeq ($(TARGET_WINDOWS),1)
-    GFX_CFLAGS  += $(shell sdl2-config --cflags) -DGLEW_STATIC
+    GFX_CFLAGS  += $(shell sdl2-config --cflags) -DGLEW_STATIC -DUSE_GLEW
     GFX_LDFLAGS += $(shell sdl2-config --libs) -lglew32 -lopengl32 -lwinmm -limm32 -lversion -loleaut32 -lsetupapi
   endif
   ifeq ($(TARGET_LINUX),1)
     GFX_CFLAGS  += $(shell sdl2-config --cflags)
     GFX_LDFLAGS += -lGL $(shell sdl2-config --libs) -lX11 -lXrandr
+  endif
+  ifeq ($(TARGET_HAIKU),1)
+    GFX_CFLAGS  += $(shell sdl2-config --cflags) $(shell pkg-config glew --cflags) -DUSE_GLEW
+    GFX_LDFLAGS += $(shell sdl2-config --libs) $(shell pkg-config glew --libs)
   endif
   ifeq ($(TARGET_WEB),1)
     GFX_CFLAGS  += -s USE_SDL=2
