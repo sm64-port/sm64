@@ -439,6 +439,8 @@ CPP := $(CROSS)cpp -P
 OBJDUMP := $(CROSS)objdump
 OBJCOPY := $(CROSS)objcopy
 PYTHON := python3
+PKGCONFIG := $(CROSS)pkg-config
+SDLCONFIG := $(CROSS)sdl2-config
 
 # Platform-specific compiler and linker flags
 ifeq ($(TARGET_WINDOWS),1)
@@ -446,8 +448,8 @@ ifeq ($(TARGET_WINDOWS),1)
   PLATFORM_LDFLAGS := -lm -lxinput9_1_0 -lole32 -no-pie -mwindows
 endif
 ifeq ($(TARGET_LINUX),1)
-  PLATFORM_CFLAGS  := -DTARGET_LINUX `pkg-config --cflags libusb-1.0`
-  PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0` -lasound -lpulse -no-pie
+  PLATFORM_CFLAGS  := -DTARGET_LINUX `$(PKGCONFIG) --cflags libusb-1.0`
+  PLATFORM_LDFLAGS := -lm -lpthread `$(PKGCONFIG) --libs libusb-1.0` -lasound -lpulse -no-pie
 endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
@@ -461,12 +463,12 @@ ifeq ($(ENABLE_OPENGL),1)
   GFX_CFLAGS  := -DENABLE_OPENGL
   GFX_LDFLAGS :=
   ifeq ($(TARGET_WINDOWS),1)
-    GFX_CFLAGS  += $(shell sdl2-config --cflags) -DGLEW_STATIC
-    GFX_LDFLAGS += $(shell sdl2-config --libs) -lglew32 -lopengl32 -lwinmm -limm32 -lversion -loleaut32 -lsetupapi
+    GFX_CFLAGS  += $(shell $(SDLCONFIG) --cflags) -DGLEW_STATIC
+    GFX_LDFLAGS += $(shell $(SDLCONFIG) --libs) -lglew32 -lopengl32 -lwinmm -limm32 -lversion -loleaut32 -lsetupapi
   endif
   ifeq ($(TARGET_LINUX),1)
-    GFX_CFLAGS  += $(shell sdl2-config --cflags)
-    GFX_LDFLAGS += -lGL $(shell sdl2-config --libs) -lX11 -lXrandr
+    GFX_CFLAGS  += $(shell $(SDLCONFIG) --cflags)
+    GFX_LDFLAGS += -lGL $(shell $(SDLCONFIG) --libs) -lX11 -lXrandr
   endif
   ifeq ($(TARGET_WEB),1)
     GFX_CFLAGS  += -s USE_SDL=2
