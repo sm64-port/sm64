@@ -483,11 +483,12 @@ endif
 ifeq ($(TARGET_VITA),1)
   PLATFORM_CFLAGS := $(OPT_FLAGS) $(INCLUDE_CFLAGS) $(VERSION_CFLAGS) $(GRUCODE_CFLAGS) -Wfatal-errors -fsigned-char -DTARGET_VITA -D__vita__
   PLATFORM_LDFLAGS := -Wl,-q \
-    -lvitaGL -lvitashark \
+    -lvitaGL -lvitashark -lSDL2 \
     -lScePvf_stub -lmathneon -lSceAppMgr_stub \
     -lSceSysmodule_stub -lSceCtrl_stub -lSceTouch_stub -lm \
     -lSceAppUtil_stub -lc -lScePower_stub -lSceCommonDialog_stub \
-    -lSceAudio_stub -lSceShaccCg_stub -lSceGxm_stub -lSceDisplay_stub
+    -lSceAudio_stub -lSceShaccCg_stub -lSceGxm_stub -lSceDisplay_stub \
+    -lSceIofilemgr_stub -lSceHid_stub -lSceMotion_stub -lm
 endif
 
 PLATFORM_CFLAGS += -DNO_SEGMENTED_MEMORY

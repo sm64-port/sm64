@@ -197,14 +197,9 @@ void main_func(void) {
         audio_api = &audio_alsa;
     }
 #endif
-#ifdef TARGET_WEB
+#if defined(TARGET_WEB) || defined(TARGET_VITA)
     if (audio_api == NULL && audio_sdl.init()) {
         audio_api = &audio_sdl;
-    }
-#endif
-#ifdef TARGET_VITA
-    if (audio_api == NULL && audio_vita.init()) {
-        audio_api = &audio_vita;
     }
 #endif
     if (audio_api == NULL) {
