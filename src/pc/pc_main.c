@@ -25,7 +25,6 @@
 #include "audio/audio_pulse.h"
 #include "audio/audio_alsa.h"
 #include "audio/audio_sdl.h"
-#include "audio/audio_vita.h"
 #include "audio/audio_null.h"
 
 #include "controller/controller_keyboard.h"
