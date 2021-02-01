@@ -1873,36 +1873,6 @@ index d2aea96..e821724 100644
          gSPMatrix(displayListIter++, scaleMat, G_MTX_MODELVIEW | G_MTX_MUL | G_MTX_PUSH);
          gSPDisplayList(displayListIter++, &intro_seg7_dl_0700B3A0);
          gSPPopMatrix(displayListIter++, G_MTX_MODELVIEW);
-diff --git a/src/pc/audio/audio_vita.c b/src/pc/audio/audio_vita.c
-index 3a898c1..9eef4be 100644
---- a/src/pc/audio/audio_vita.c
-+++ b/src/pc/audio/audio_vita.c
-@@ -5,7 +5,7 @@
- 
- #include "audio_api.h"
- 
--#define AUDIO_SIZE 1088
-+#define AUDIO_SIZE 1024
- #define AUDIO_RATE 32000
- 
- int chan = -1;
-diff --git a/src/pc/gfx/gfx_dxgi.cpp b/src/pc/gfx/gfx_dxgi.cpp
-index 02cdd81..c036e0b 100644
---- a/src/pc/gfx/gfx_dxgi.cpp
-+++ b/src/pc/gfx/gfx_dxgi.cpp
-@@ -34,10 +34,10 @@
- 
- #ifdef VERSION_EU
- #define FRAME_INTERVAL_US_NUMERATOR 40000
--#define FRAME_INTERVAL_US_DENOMINATOR 1
-+#define FRAME_INTERVAL_US_DENOMINATOR 2
- #else
- #define FRAME_INTERVAL_US_NUMERATOR 100000
--#define FRAME_INTERVAL_US_DENOMINATOR 3
-+#define FRAME_INTERVAL_US_DENOMINATOR 6
- #endif
- 
- using namespace Microsoft::WRL; // For ComPtr
 diff --git a/src/pc/gfx/gfx_glx.c b/src/pc/gfx/gfx_glx.c
 index 5f5dd87..1329287 100644
 --- a/src/pc/gfx/gfx_glx.c
@@ -1975,10 +1945,10 @@ index 05b06b6..6b46736 100644
  
  static const uint64_t frametime = 1000000 / FRAMERATE;
 diff --git a/src/pc/pc_main.c b/src/pc/pc_main.c
-index c7aebdb..e845c40 100644
+index 884a9f1..d47b86a 100644
 --- a/src/pc/pc_main.c
 +++ b/src/pc/pc_main.c
-@@ -84,6 +84,25 @@ void send_display_list(struct SPTask *spTask) {
+@@ -83,6 +83,25 @@ void send_display_list(struct SPTask *spTask) {
  #define SAMPLES_LOW 528
  #endif
  
@@ -2004,7 +1974,7 @@ index c7aebdb..e845c40 100644
  void produce_one_frame(void) {
      gfx_start_frame();
      game_loop_one_iteration();
-@@ -103,6 +122,11 @@ void produce_one_frame(void) {
+@@ -102,6 +121,11 @@ void produce_one_frame(void) {
      audio_api->play((u8 *)audio_buffer, 2 * num_audio_samples * 4);
      
      gfx_end_frame();
