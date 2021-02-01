@@ -483,7 +483,7 @@ static void gfx_vitagl_init(void) {
     vglUseVram(GL_TRUE);
     vglWaitVblankStart(GL_TRUE);
 
-    vglInitExtended(0x800000, 960, 544, 0x8000000, SCE_GXM_MULTISAMPLE_4X);
+    vglInitExtended(0x1000000, 960, 544, 0x6000000, SCE_GXM_MULTISAMPLE_4X);
     
     check_for_shader_compiler();
 
