@@ -1,42 +1,14 @@
 diff --git a/extraout.py b/extraout.py
 new file mode 100755
-index 0000000..f7633b1
+index 0000000..7cf4de4
 --- /dev/null
 +++ b/extraout.py
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,43 @@
 +#! /usr/bin/env python3
 +from pypresence import Presence
 +import time
 +import json
 +
-+course_name_map = {
-+    0:  "Castle Grounds",
-+    1:  "Bob Omb Battlefield",
-+    2:  "Whomp's Fortress",
-+    3:  "Jolly Rodger's Bay",
-+    4:  "Cool Cool Mountain",
-+    5:  "Big Boo's Haunt",
-+    6:  "Hazy Maze Cave",
-+    7:  "Lethal Lava Land",
-+    8:  "Shifting Sand Land",
-+    9:  "Dire Dire Docks",
-+    10: "Snowman's Land",
-+    11: "Wet Dry World",
-+    12: "Tall Tall Mountain",
-+    13: "Tiny Huge Island",
-+    14: "Tick Tock Clock",
-+    15: "Rainbow Ride",
-+    16: "Bowser in the Dark World",
-+    17: "Bowser in the Fire Sea",
-+    18: "Bowser in the Sky",
-+    19: "Princess's Secret Slide",
-+    20: "Cavern of the Metal Cap",
-+    21: "Tower of the Wing Cap",
-+    22: "Vanish Cap Under the Moat",
-+    23: "Winged Mario over the Rainbow",
-+    24: "Secret Aquarium",
-+    25: "The End"
-+}
 +
 +client_id = '813771660048990250'
 +RPC = Presence(client_id, pipe=0)
@@ -58,14 +30,14 @@ index 0000000..f7633b1
 +                continue
 +            olddata = buffer
 +            RPC.update(
-+                details=f"In course {buffer['courseNum']} ({course_name_map[buffer['courseNum']]})",
++                details=f"In course {buffer['courseNum']} ({buffer['courseName']})",
 +                state=f"Mission: {buffer['courseActNum']}\n"
 +                      f"Stars: {buffer['stars']}\n"
 +                      +(f"Coins: {buffer['coins']}\n" if buffer["courseNum"] != 0 else "")+
 +                      f"Health: {buffer['health']}\n"
 +                      f"Lives: {buffer['lives']}",
 +                large_image=f"c{buffer['courseNum']}",
-+                large_text=course_name_map[buffer["courseNum"]]
++                large_text=buffer["courseName"]
 +            )
 +            
 +            buffer = ""
@@ -77,10 +49,10 @@ index 0000000..f7633b1
 +
 diff --git a/src/game/extraout.c b/src/game/extraout.c
 new file mode 100644
-index 0000000..f16327a
+index 0000000..b127015
 --- /dev/null
 +++ b/src/game/extraout.c
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,171 @@
 +#if defined(TARGET_LINUX) || defined(TARGET_WINDOWS) || defined(TARGET_MACOS)
 +#define TARGET_PC
 +#endif
@@ -111,6 +83,65 @@ index 0000000..f16327a
 +static char *message = NULL;
 +static char messagear[30];
 +static int debugOutRefresh = 0;
++
++static const char charset[0x100] = {
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 7
++    ' ', ' ', 'a', 'b', 'c', 'd', 'e', 'f', // 15
++    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', // 23
++    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', // 31
++    'w', 'x', 'y', 'z', ' ', ' ', ' ', ' ', // 39
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 49
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 55
++    ' ', ' ', ' ', ' ', ' ', ' ', '\'', ' ', // 63
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 71
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 79
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 87
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 95
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 103
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ',', // 111
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 119
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 127
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 135
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 143
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 151
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-', // 159
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 167
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 175
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 183
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 192
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 199
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 207
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 215
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 223
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 231
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', // 239
++    ' ', ' ', '!', ' ', ' ', ' ', ' ', ' ', // 247
++    ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '  // 255
++};
++
++
++void convertU8ptoCp(const u8 *in, char *out, u16 maxlen) {
++    int capsNext = TRUE;
++    
++    for (u16 it = 0; in[it] != 0xFF && it != maxlen; it++) {
++        if (in[it] < 0xFF) {
++            out[it] = charset[in[it]];
++            
++            // Capitalise
++            if (capsNext == TRUE && out[it] >= 'a' && out[it] <= 'z') {
++                out[it] -= 'a' - 'A';
++                capsNext = FALSE;
++            }
++        } else {
++            out[it] = ' ';
++        }
++        
++        if (out[it] == ' ' || out[it] == '-') {
++            capsNext = TRUE;
++        }
++    }
++}
++
 +void extraout(void) {
 +    // Update message every 30 frames
 +    if (debugOutRefresh-- == 0) {
@@ -135,6 +166,29 @@ index 0000000..f16327a
 +        fputs(message, ffile);
 +        fclose(ffile);
 +
++        // Get course name
++        char courseName[32] = "Castle grounds";
++        if (gCurrCourseNum != 0) {
++            // Get course name table for current language
++            void **courseNameTbl;
++#ifndef VERSION_EU
++            courseNameTbl = segmented_to_virtual(seg2_course_name_table);
++#else
++            switch (gInGameLanguage) {
++                case LANGUAGE_ENGLISH:
++                    courseNameTbl = segmented_to_virtual(course_name_table_eu_en);
++                    break;
++                case LANGUAGE_FRENCH:
++                    courseNameTbl = segmented_to_virtual(course_name_table_eu_fr);
++                    break;
++                case LANGUAGE_GERMAN:
++                    courseNameTbl = segmented_to_virtual(course_name_table_eu_de);
++                    break;
++            }
++#endif
++            convertU8ptoCp(&segmented_to_virtual(courseNameTbl[gCurrCourseNum - 1])[3], courseName, sizeof(courseName));
++        }
++
 +        // JSON output
 +        float *pos = (gMarioStates[0].marioObj->header.gfx.pos);
 +        setvbuf(stdout, NULL, _IONBF, 0);
@@ -143,6 +197,7 @@ index 0000000..f16327a
 +               "    \"message\": \"%s\",\n"
 +               "    \"courseNum\": %d,\n"
 +               "    \"courseActNum\": %d,\n"
++               "    \"courseName\": \"%s\",\n"
 +               "    \"position\": [%f, %f, %f],\n"
 +               "    \"health\": %i,\n"
 +               "    \"lives\": %i,\n"
@@ -151,8 +206,9 @@ index 0000000..f16327a
 +               "    \"hudFlags\": %i\n"
 +               "}\n"
 +               "---\n",
-+               message, gCurrCourseNum, gDialogCourseActNum, pos[0], pos[1], pos[2], gHudDisplay.wedges,
-+               gHudDisplay.lives, gHudDisplay.stars, gHudDisplay.coins, gHudDisplay.flags);
++               message, gCurrCourseNum, gDialogCourseActNum, courseName, pos[0], pos[1], pos[2],
++               gHudDisplay.wedges, gHudDisplay.lives, gHudDisplay.stars, gHudDisplay.coins,
++               gHudDisplay.flags);
 +#endif
 +    }
 +
