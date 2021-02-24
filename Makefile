@@ -426,10 +426,10 @@ ifneq ($(TARGET_WEB),1)
 else
   CC := emcc
 endif
-ifeq ($(TARGET_WINDOWS),1)
-  LD := $(CXX)
-else
+ifeq ($(CXX_FILES),"")
   LD := $(CC)
+else
+  LD := $(CXX)
 endif
 CPP := cpp -P
 OBJDUMP := objdump
