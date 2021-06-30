@@ -21,8 +21,12 @@ NON_MATCHING ?= 0
 TARGET_N64 ?= 0
 # Build for Emscripten/WebGL
 TARGET_WEB ?= 0
+# Build for SDL2 (No specific windwing API required, will run on whatever API SDL2 runs on)
+TARGET_SDL2 ?= 0
 # Compiler to use (ido or gcc)
 COMPILER ?= ido
+# Build against OpenGL_ES2 instead of desktop OpenGL
+USE_GLES ?= 0
 
 # Automatic settings only for ports
 ifeq ($(TARGET_N64),0)
@@ -30,12 +34,15 @@ ifeq ($(TARGET_N64),0)
   NON_MATCHING := 1
   GRUCODE := f3dex2e
   TARGET_WINDOWS := 0
-  ifeq ($(TARGET_WEB),0)
-    ifeq ($(OS),Windows_NT)
-      TARGET_WINDOWS := 1
-    else
-      # TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
-      TARGET_LINUX := 1
+
+  ifeq ($(TARGET_SDL2),0)
+    ifeq ($(TARGET_WEB),0)
+      ifeq ($(OS),Windows_NT)
+	TARGET_WINDOWS := 1
+      else
+	# TODO: Detect Mac OS X, BSD, etc. For now, assume Linux
+	TARGET_LINUX := 1
+      endif
     endif
   endif
 
@@ -194,7 +201,11 @@ else
 ifeq ($(TARGET_WEB),1)
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_web
 else
+ifeq ($(TARGET_SDL2),1)
   BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
+else
+  BUILD_DIR := $(BUILD_DIR_BASE)/$(VERSION)_pc
+endif
 endif
 endif
 
@@ -445,6 +456,10 @@ ifeq ($(TARGET_LINUX),1)
   PLATFORM_CFLAGS  := -DTARGET_LINUX `pkg-config --cflags libusb-1.0`
   PLATFORM_LDFLAGS := -lm -lpthread `pkg-config --libs libusb-1.0` -lasound -lpulse -no-pie
 endif
+ifeq ($(TARGET_SDL2),1)
+  PLATFORM_CFLAGS  := -DTARGET_SDL2
+  PLATFORM_LDFLAGS := -lm -lpthread -lasound -no-pie
+endif
 ifeq ($(TARGET_WEB),1)
   PLATFORM_CFLAGS  := -DTARGET_WEB
   PLATFORM_LDFLAGS := -lm -no-pie -s TOTAL_MEMORY=20MB -g4 --source-map-base http://localhost:8080/ -s "EXTRA_EXPORTED_RUNTIME_METHODS=['callMain']"
@@ -467,6 +482,15 @@ ifeq ($(ENABLE_OPENGL),1)
   ifeq ($(TARGET_WEB),1)
     GFX_CFLAGS  += -s USE_SDL=2
     GFX_LDFLAGS += -lGL -lSDL2
+  endif
+  ifeq ($(TARGET_SDL2),1)
+    # SDL2 can use either GL or GLES2
+    GFX_CFLAGS  += -DUSE_SDL=2
+    ifeq ($(USE_GLES),1)
+      GFX_LDFLAGS += -lGLESv2 -lSDL2 -DUSE_GLES
+    else
+      GFX_LDFLAGS += -lGL -lSDL2
+    endif
   endif
 endif
 ifeq ($(ENABLE_DX11),1)
