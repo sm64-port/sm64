@@ -247,6 +247,8 @@ static void gfx_sdl_onkeyup(int scancode) {
 
 static void gfx_sdl_handle_events(void) {
     SDL_Event event;
+    const Uint8 *state;
+
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
 #ifndef TARGET_WEB
@@ -254,6 +256,14 @@ static void gfx_sdl_handle_events(void) {
             case SDL_KEYDOWN:
                 if (event.key.keysym.sym == SDLK_F10) {
                     set_fullscreen(!fullscreen_state, true);
+                    break;
+                }
+                if (event.key.keysym.sym == SDLK_F4) {
+                    state = SDL_GetKeyboardState(NULL);
+                    if (state[SDL_SCANCODE_LALT]) {
+                       SDL_Quit();
+                       exit(0);
+                    }
                     break;
                 }
                 gfx_sdl_onkeydown(event.key.keysym.scancode);
